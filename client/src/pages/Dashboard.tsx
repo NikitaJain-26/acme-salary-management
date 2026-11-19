@@ -6,6 +6,8 @@ import {
 } from 'lucide-react'
 
 import StatCard from '../components/dashboard/StatCard'
+import DepartmentChart from '../components/dashboard/DepartmentChart'
+import CountryChart from '../components/dashboard/CountryChart'
 
 function Dashboard() {
   return (
@@ -49,6 +51,10 @@ function Dashboard() {
           icon={Wallet}
         />
       </div>
+    <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+  <DepartmentChart />
+  <CountryChart />
+</div>
     </div>
   )
 }
