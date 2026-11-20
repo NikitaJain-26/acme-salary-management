@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Employee {
+  id             String   @id @default(cuid())
+  employeeNumber String   @unique
+  firstName      String
+  lastName       String
+  email          String   @unique
+  countryCode    String
+  department     String
+  jobTitle       String
+  status         String   @default("ACTIVE")
+  hireDate       DateTime
+
+  salary         Salary?
+  salaryHistory  SalaryHistory[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([countryCode])
+  @@index([department])
+  @@index([status])
+}
+
+model Salary {
+  id           String   @id @default(cuid())
+  employeeId   String   @unique
+  amount       Int
+  currencyCode String
+  effectiveFrom DateTime
+
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SalaryHistory {
+  id           String   @id @default(cuid())
+  employeeId   String
+  amount       Int
+  currencyCode String
+  effectiveFrom DateTime
+  reason       String?
+
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+
+  @@index([employeeId, effectiveFrom])
+}
