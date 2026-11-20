@@ -1,6 +1,7 @@
 import express from 'express'
 import prisma from './config/database.js'
 import 'dotenv/config'
+import employeeRoutes from './routes/employee.routes.js'
 
 const app = express()
 
@@ -8,6 +9,7 @@ const PORT = 5000
 
 // Middleware to parse JSON request bodies
 app.use(express.json())
+app.use('/api/employees', employeeRoutes)
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({

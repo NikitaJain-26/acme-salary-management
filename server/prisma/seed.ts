@@ -80,11 +80,16 @@ async function seedEmployees() {
 
   console.log('Generating 10,000 employees...')
 
+  const emailOccurrences = new Map<string, number>()
+
   const employees = Array.from({ length: TOTAL_EMPLOYEES }, (_, index) => {
     const country = countries[index % countries.length]
     const department = departments[randomNumber(0, departments.length - 1)]
     const firstName = firstNames[randomNumber(0, firstNames.length - 1)]
     const lastName = lastNames[randomNumber(0, lastNames.length - 1)]
+    const emailName = `${firstName}.${lastName}`.toLowerCase()
+    const emailOccurrence = (emailOccurrences.get(emailName) ?? 0) + 1
+    emailOccurrences.set(emailName, emailOccurrence)
     const hireDate = randomDate(2015, 2026)
 
     const salaryAmount =
@@ -97,7 +102,7 @@ async function seedEmployees() {
       employeeNumber: `EMP${String(index + 1).padStart(5, '0')}`,
       firstName,
       lastName,
-      email: `employee${index + 1}@acme.com`,
+      email: `${emailName}${emailOccurrence > 1 ? `.${emailOccurrence}` : ''}@acme.com`,
       countryCode: country.code,
       department,
       jobTitle: jobTitles[department][
