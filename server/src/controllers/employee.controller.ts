@@ -6,6 +6,7 @@ export async function getEmployees(req: Request, res: Response) {
   try {
     const page = Number(req.query.page) || 1
     const limit = Number(req.query.limit) || 10
+    const search = String(req.query.search || '').trim()
 
     if (
       !Number.isInteger(page) ||
@@ -21,7 +22,7 @@ export async function getEmployees(req: Request, res: Response) {
       return
     }
 
-    const result = await getAllEmployees({ page, limit })
+   const result = await getAllEmployees({ page, limit, search })
 
     res.status(200).json({
       success: true,

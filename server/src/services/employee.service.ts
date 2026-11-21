@@ -4,13 +4,25 @@ import prisma from '../config/database.js'
 interface PaginationParams {
   page: number
   limit: number
+  search?: string
 }
 
-export async function getAllEmployees({ page, limit }: PaginationParams) {
+export async function getAllEmployees({ page, limit,search }: PaginationParams) {
   const skip = (page - 1) * limit
+  const where = search
+  ? {
+      OR: [
+        { firstName: { contains: search } },
+        { lastName: { contains: search } },
+        { employeeNumber: { contains: search } },
+        { email: { contains: search } },
+      ],
+    }
+  : {}
 
   const [employees, totalEmployees] = await Promise.all([
     prisma.employee.findMany({
+      where,
       skip,
       take: limit,
       include: {
@@ -21,7 +33,7 @@ export async function getAllEmployees({ page, limit }: PaginationParams) {
       },
     }),
 
-    prisma.employee.count(),
+    prisma.employee.count({where}),
   ])
 
   return {
