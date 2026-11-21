@@ -7,6 +7,9 @@ export async function getEmployees(req: Request, res: Response) {
     const page = Number(req.query.page) || 1
     const limit = Number(req.query.limit) || 10
     const search = String(req.query.search || '').trim()
+    const country = String(req.query.country || '').trim().toUpperCase()
+    const department = String(req.query.department || '').trim()
+    const status = String(req.query.status || '').trim().toUpperCase()
 
     if (
       !Number.isInteger(page) ||
@@ -22,7 +25,22 @@ export async function getEmployees(req: Request, res: Response) {
       return
     }
 
-   const result = await getAllEmployees({ page, limit, search })
+    if (status && !['ACTIVE', 'INACTIVE'].includes(status)) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid status filter',
+      })
+      return
+    }
+
+    const result = await getAllEmployees({
+      page,
+      limit,
+      search,
+      country,
+      department,
+      status,
+    })
 
     res.status(200).json({
       success: true,

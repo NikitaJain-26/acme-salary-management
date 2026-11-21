@@ -5,20 +5,35 @@ interface PaginationParams {
   page: number
   limit: number
   search?: string
+  country?: string
+  department?: string
+  status?: string
 }
 
-export async function getAllEmployees({ page, limit,search }: PaginationParams) {
+export async function getAllEmployees({
+  page,
+  limit,
+  search,
+  country,
+  department,
+  status,
+}: PaginationParams) {
   const skip = (page - 1) * limit
-  const where = search
-  ? {
-      OR: [
-        { firstName: { contains: search } },
-        { lastName: { contains: search } },
-        { employeeNumber: { contains: search } },
-        { email: { contains: search } },
-      ],
-    }
-  : {}
+  const where = {
+    ...(search
+      ? {
+          OR: [
+            { firstName: { contains: search } },
+            { lastName: { contains: search } },
+            { employeeNumber: { contains: search } },
+            { email: { contains: search } },
+          ],
+        }
+      : {}),
+    ...(country ? { countryCode: country } : {}),
+    ...(department ? { department } : {}),
+    ...(status ? { status } : {}),
+  }
 
   const [employees, totalEmployees] = await Promise.all([
     prisma.employee.findMany({
