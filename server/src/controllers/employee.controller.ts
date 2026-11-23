@@ -1,6 +1,10 @@
 
 import type { Request, Response } from 'express'
-import { getAllEmployees } from '../services/employee.service.js'
+import {
+  employeeSortFields,
+  getAllEmployees,
+} from '../services/employee.service.js'
+import type { EmployeeSortField } from '../services/employee.service.js'
 
 export async function getEmployees(req: Request, res: Response) {
   try {
@@ -10,6 +14,10 @@ export async function getEmployees(req: Request, res: Response) {
     const country = String(req.query.country || '').trim().toUpperCase()
     const department = String(req.query.department || '').trim()
     const status = String(req.query.status || '').trim().toUpperCase()
+    const sortByInput = String(req.query.sortBy || '').trim()
+    const sortOrderInput = String(req.query.sortOrder || 'desc')
+      .trim()
+      .toLowerCase()
 
     if (
       !Number.isInteger(page) ||
@@ -33,6 +41,33 @@ export async function getEmployees(req: Request, res: Response) {
       return
     }
 
+    let sortBy: EmployeeSortField = 'createdAt'
+    if (sortByInput) {
+      const matchedSortField = employeeSortFields.find(
+        (field) => field === sortByInput,
+      )
+
+      if (!matchedSortField) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid sort field',
+        })
+        return
+      }
+
+      sortBy = matchedSortField
+    }
+
+    if (!['asc', 'desc'].includes(sortOrderInput)) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid sort order',
+      })
+      return
+    }
+
+    const sortOrder = sortOrderInput === 'asc' ? 'asc' : 'desc'
+
     const result = await getAllEmployees({
       page,
       limit,
@@ -40,6 +75,8 @@ export async function getEmployees(req: Request, res: Response) {
       country,
       department,
       status,
+      sortBy,
+      sortOrder,
     })
 
     res.status(200).json({

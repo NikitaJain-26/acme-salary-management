@@ -1,6 +1,22 @@
 
 import prisma from '../config/database.js'
 
+export const employeeSortFields = [
+  'firstName',
+  'lastName',
+  'employeeNumber',
+  'countryCode',
+  'department',
+  'status',
+  'hireDate',
+] as const
+
+export type EmployeeSortField =
+  | (typeof employeeSortFields)[number]
+  | 'createdAt'
+
+export type SortOrder = 'asc' | 'desc'
+
 interface PaginationParams {
   page: number
   limit: number
@@ -8,6 +24,8 @@ interface PaginationParams {
   country?: string
   department?: string
   status?: string
+  sortBy: EmployeeSortField
+  sortOrder: SortOrder
 }
 
 export async function getAllEmployees({
@@ -17,6 +35,8 @@ export async function getAllEmployees({
   country,
   department,
   status,
+  sortBy,
+  sortOrder,
 }: PaginationParams) {
   const skip = (page - 1) * limit
   const where = {
@@ -43,9 +63,7 @@ export async function getAllEmployees({
       include: {
         salary: true,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { [sortBy]: sortOrder },
     }),
 
     prisma.employee.count({where}),
