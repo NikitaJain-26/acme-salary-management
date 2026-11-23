@@ -77,3 +77,27 @@ export async function getAllEmployees({
     pageSize: limit,
   }
 }
+
+export async function getEmployeeById(id: string, includeHistory: boolean) {
+  if (includeHistory) {
+    return prisma.employee.findUnique({
+      where: { id },
+      include: {
+        salary: true,
+        salaryHistory: {
+          orderBy: [
+            { effectiveFrom: 'desc' },
+            { createdAt: 'desc' },
+          ],
+        },
+      },
+    })
+  }
+
+  return prisma.employee.findUnique({
+    where: { id },
+    include: {
+      salary: true,
+    },
+  })
+}
