@@ -78,6 +78,72 @@ export async function getAllEmployees({
   }
 }
 
+export interface SalaryUpdateParams {
+  amount: number
+  currencyCode: string
+  effectiveFrom: Date
+  reason?: string
+}
+
+export async function updateEmployeeSalary(
+  employeeId: string,
+  params: SalaryUpdateParams,
+) {
+  return prisma.$transaction(async (tx) => {
+    const employee = await tx.employee.findUnique({
+      where: { id: employeeId },
+      select: { id: true },
+    })
+
+    if (!employee) {
+      return null
+    }
+
+    const existingSalary = await tx.salary.findUnique({
+      where: { employeeId },
+    })
+
+    if (existingSalary) {
+      await tx.salaryHistory.create({
+        data: {
+          employeeId,
+          amount: existingSalary.amount,
+          currencyCode: existingSalary.currencyCode,
+          effectiveFrom: existingSalary.effectiveFrom,
+          reason: 'Previous salary before update',
+        },
+      })
+    }
+
+    await tx.salaryHistory.create({
+      data: {
+        employeeId,
+        amount: params.amount,
+        currencyCode: params.currencyCode,
+        effectiveFrom: params.effectiveFrom,
+        reason: params.reason,
+      },
+    })
+
+    const salary = await tx.salary.upsert({
+      where: { employeeId },
+      create: {
+        employeeId,
+        amount: params.amount,
+        currencyCode: params.currencyCode,
+        effectiveFrom: params.effectiveFrom,
+      },
+      update: {
+        amount: params.amount,
+        currencyCode: params.currencyCode,
+        effectiveFrom: params.effectiveFrom,
+      },
+    })
+
+    return salary
+  })
+}
+
 export async function getEmployeeById(id: string, includeHistory: boolean) {
   if (includeHistory) {
     return prisma.employee.findUnique({

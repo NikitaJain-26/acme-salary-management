@@ -4,6 +4,7 @@ import {
   employeeSortFields,
   getAllEmployees,
   getEmployeeById,
+  updateEmployeeSalary,
 } from '../services/employee.service.js'
 import type { EmployeeSortField } from '../services/employee.service.js'
 
@@ -90,6 +91,77 @@ export async function getEmployees(req: Request, res: Response) {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch employees',
+    })
+  }
+}
+
+export async function putEmployeeSalary(req: Request, res: Response) {
+  try {
+    const id = req.params.id
+    if (typeof id !== 'string' || !id.trim()) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid employee ID',
+      })
+      return
+    }
+
+    const amount = req.body.amount
+    const currencyCode =
+      typeof req.body.currencyCode === 'string'
+        ? req.body.currencyCode.trim().toUpperCase()
+        : ''
+    const effectiveFromInput =
+      typeof req.body.effectiveFrom === 'string'
+        ? req.body.effectiveFrom.trim()
+        : ''
+    const reason =
+      typeof req.body.reason === 'string' && req.body.reason.trim()
+        ? req.body.reason.trim()
+        : undefined
+
+    const effectiveFrom = new Date(effectiveFromInput)
+
+    if (
+      !Number.isInteger(amount) ||
+      amount <= 0 ||
+      !/^[A-Z]{3}$/.test(currencyCode) ||
+      !effectiveFromInput ||
+      Number.isNaN(effectiveFrom.getTime())
+    ) {
+      res.status(400).json({
+        success: false,
+        message:
+          'Invalid salary data: amount must be a positive integer, currencyCode must be a three-letter code, and effectiveFrom must be a valid date',
+      })
+      return
+    }
+
+    const salary = await updateEmployeeSalary(id.trim(), {
+      amount,
+      currencyCode,
+      effectiveFrom,
+      reason,
+    })
+
+    if (!salary) {
+      res.status(404).json({
+        success: false,
+        message: 'Employee not found',
+      })
+      return
+    }
+
+    res.status(200).json({
+      success: true,
+      salary,
+    })
+  } catch (error) {
+    console.error('Error updating employee salary:', error)
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update employee salary',
     })
   }
 }
