@@ -48,6 +48,14 @@ export interface Employee {
   salary: EmployeeSalary | null
 }
 
+export interface SalaryHistoryRecord extends EmployeeSalary {
+  reason: string | null
+}
+
+export interface EmployeeDetails extends Employee {
+  salaryHistory?: SalaryHistoryRecord[]
+}
+
 export interface EmployeeListResponse {
   success: true
   employees: Employee[]
@@ -55,6 +63,11 @@ export interface EmployeeListResponse {
   currentPage: number
   totalPages: number
   pageSize: number
+}
+
+export interface EmployeeDetailsResponse {
+  success: true
+  employee: EmployeeDetails
 }
 
 export const apiClient = axios.create({
@@ -67,6 +80,20 @@ export async function getEmployees(
   const response = await apiClient.get<EmployeeListResponse>('/employees', {
     params,
   })
+
+  return response.data
+}
+
+export async function getEmployeeDetails(
+  id: string,
+  includeHistory = false,
+): Promise<EmployeeDetailsResponse> {
+  const response = await apiClient.get<EmployeeDetailsResponse>(
+    `/employees/${encodeURIComponent(id)}`,
+    {
+      params: { includeHistory },
+    },
+  )
 
   return response.data
 }

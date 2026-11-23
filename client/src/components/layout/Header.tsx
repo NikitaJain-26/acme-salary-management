@@ -3,7 +3,11 @@ import { useLocation } from 'react-router-dom'
 
 function Header() {
   const location = useLocation()
-  const title = location.pathname === '/employees' ? 'Employees' : 'Dashboard'
+  const title = location.pathname.startsWith('/employees/')
+    ? 'Employee details'
+    : location.pathname === '/employees'
+      ? 'Employees'
+      : 'Dashboard'
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between">

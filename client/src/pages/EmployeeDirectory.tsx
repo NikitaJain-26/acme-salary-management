@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import {
   getEmployees,
   type Employee,
@@ -275,9 +276,12 @@ function EmployeeDirectory() {
                 {employees.map((employee) => (
                   <tr key={employee.id}>
                     <td className="px-5 py-4">
-                      <p className="font-medium text-slate-900">
+                      <Link
+                        className="font-medium text-blue-700 hover:underline"
+                        to={`/employees/${encodeURIComponent(employee.id)}`}
+                      >
                         {employee.firstName} {employee.lastName}
-                      </p>
+                      </Link>
                       <p className="text-xs text-slate-500">
                         {employee.employeeNumber} · {employee.email}
                       </p>

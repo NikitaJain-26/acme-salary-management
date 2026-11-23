@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, jest } from '@jest/globals'
+import { MemoryRouter } from 'react-router-dom'
 import EmployeeDirectory from './EmployeeDirectory'
 import {
   getEmployees,
@@ -12,6 +13,14 @@ jest.mock('../services/employeeApi', () => ({
 }))
 
 const mockedGetEmployees = jest.mocked(getEmployees)
+
+function renderEmployeeDirectory() {
+  return render(
+    <MemoryRouter>
+      <EmployeeDirectory />
+    </MemoryRouter>,
+  )
+}
 
 const employeesResponse: EmployeeListResponse = {
   success: true,
@@ -46,7 +55,7 @@ describe('EmployeeDirectory', () => {
   it('loads and displays employees from the API', async () => {
     mockedGetEmployees.mockResolvedValue(employeesResponse)
 
-    render(<EmployeeDirectory />)
+    renderEmployeeDirectory()
 
     expect(await screen.findByText('Priya Sharma')).toBeTruthy()
     expect(mockedGetEmployees).toHaveBeenCalledWith(
@@ -57,7 +66,7 @@ describe('EmployeeDirectory', () => {
   it('sends search and selected filters to the API', async () => {
     mockedGetEmployees.mockResolvedValue(employeesResponse)
 
-    render(<EmployeeDirectory />)
+    renderEmployeeDirectory()
     await screen.findByText('Priya Sharma')
 
     fireEvent.change(screen.getByLabelText('Search employees'), {
@@ -104,7 +113,7 @@ describe('EmployeeDirectory', () => {
       totalPages: 2,
     })
 
-    render(<EmployeeDirectory />)
+    renderEmployeeDirectory()
     await screen.findByText('Priya Sharma')
     fireEvent.click(screen.getByRole('button', { name: 'Next' }))
 
@@ -118,7 +127,7 @@ describe('EmployeeDirectory', () => {
   it('shows an error when the API request fails', async () => {
     mockedGetEmployees.mockRejectedValue(new Error('API unavailable'))
 
-    render(<EmployeeDirectory />)
+    renderEmployeeDirectory()
 
     expect((await screen.findByRole('alert')).textContent).toBe(
       'Could not load employees. Please try again.',
