@@ -5,8 +5,16 @@ import {
   ChartColumn,
   Settings,
 } from 'lucide-react'
+import { NavLink } from 'react-router-dom'
 
 function Sidebar() {
+  const linkClass = ({ isActive }: { isActive: boolean }) =>
+    `flex items-center gap-3 rounded-lg px-4 py-3 ${
+      isActive
+        ? 'bg-blue-50 font-medium text-blue-600'
+        : 'text-slate-600 hover:bg-slate-50'
+    }`
+
   return (
     <aside className="w-64 min-h-screen bg-white border-r border-slate-200 p-5">
       {/* Logo */}
@@ -21,15 +29,15 @@ function Sidebar() {
 
       {/* Navigation */}
       <nav className="space-y-2">
-        <div className="flex items-center gap-3 rounded-lg bg-blue-50 px-4 py-3 text-blue-600 font-medium">
+        <NavLink className={linkClass} to="/">
           <LayoutDashboard size={20} />
           Dashboard
-        </div>
+        </NavLink>
 
-        <div className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-600">
+        <NavLink className={linkClass} to="/employees">
           <Users size={20} />
           Employees
-        </div>
+        </NavLink>
 
         <div className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-600">
           <Wallet size={20} />

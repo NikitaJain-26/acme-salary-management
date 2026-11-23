@@ -1,11 +1,15 @@
 import { Bell, Search } from 'lucide-react'
+import { useLocation } from 'react-router-dom'
 
 function Header() {
+  const location = useLocation()
+  const title = location.pathname === '/employees' ? 'Employees' : 'Dashboard'
+
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between">
       {/* Page title */}
       <h2 className="text-lg font-semibold text-slate-800">
-        Dashboard
+        {title}
       </h2>
 
       {/* Right section */}

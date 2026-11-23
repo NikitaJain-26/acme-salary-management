@@ -1,8 +1,8 @@
 import Sidebar from '../components/layout/Sidebar'
 import Header from '../components/layout/Header'
-import Dashboard from '../pages/Dashboard'
+import type { ReactNode } from 'react'
 
-function MainLayout() {
+function MainLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <Sidebar />
@@ -11,7 +11,7 @@ function MainLayout() {
         <Header />
 
         <section className="p-8">
-          <Dashboard />
+          {children}
         </section>
       </main>
     </div>
