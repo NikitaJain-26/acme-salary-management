@@ -5,14 +5,17 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import EmployeeDetails from './EmployeeDetails'
 import {
   getEmployeeDetails,
+  updateEmployeeSalary,
   type EmployeeDetailsResponse,
 } from '../services/employeeApi'
 
 jest.mock('../services/employeeApi', () => ({
   getEmployeeDetails: jest.fn(),
+  updateEmployeeSalary: jest.fn(),
 }))
 
 const mockedGetEmployeeDetails = jest.mocked(getEmployeeDetails)
+const mockedUpdateEmployeeSalary = jest.mocked(updateEmployeeSalary)
 
 const employeeResponse: EmployeeDetailsResponse = {
   success: true,
@@ -56,6 +59,7 @@ function renderEmployeeDetails() {
 
 afterEach(() => {
   mockedGetEmployeeDetails.mockReset()
+  mockedUpdateEmployeeSalary.mockReset()
 })
 
 describe('EmployeeDetails', () => {
@@ -106,6 +110,50 @@ describe('EmployeeDetails', () => {
         true,
       )
     })
+  })
+
+  it('submits salary in integer minor units and refreshes details', async () => {
+    mockedGetEmployeeDetails.mockResolvedValue(employeeResponse)
+    mockedUpdateEmployeeSalary.mockResolvedValue({
+      success: true,
+      salary: {
+        id: 'salary-1',
+        employeeId: 'employee-1',
+        amount: 8500000,
+        currencyCode: 'INR',
+        effectiveFrom: '2026-11-23T00:00:00.000Z',
+        createdAt: '2026-11-23T00:00:00.000Z',
+        updatedAt: '2026-11-23T00:00:00.000Z',
+      },
+    })
+
+    renderEmployeeDetails()
+    await screen.findByText('Priya Sharma')
+
+    fireEvent.change(screen.getByLabelText('Salary amount'), {
+      target: { value: '85000' },
+    })
+    fireEvent.change(screen.getByLabelText('Salary currency'), {
+      target: { value: 'INR' },
+    })
+    fireEvent.change(screen.getByLabelText('Salary effective date'), {
+      target: { value: '2026-11-23' },
+    })
+    fireEvent.change(screen.getByLabelText('Salary update reason'), {
+      target: { value: 'Annual adjustment' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Update salary' }))
+
+    await waitFor(() => {
+      expect(mockedUpdateEmployeeSalary).toHaveBeenCalledWith('employee-1', {
+        amount: 8500000,
+        currencyCode: 'INR',
+        effectiveFrom: '2026-11-23',
+        reason: 'Annual adjustment',
+      })
+    })
+
+    expect(await screen.findByText('Salary updated successfully.')).toBeTruthy()
   })
 
   it('shows an error when the employee details request fails', async () => {

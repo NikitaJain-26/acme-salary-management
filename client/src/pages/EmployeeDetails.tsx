@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   getEmployeeDetails,
+  updateEmployeeSalary,
   type EmployeeDetails as EmployeeDetailsData,
 } from '../services/employeeApi'
 
@@ -18,6 +19,9 @@ function EmployeeDetails() {
   const [includeHistory, setIncludeHistory] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [updateError, setUpdateError] = useState('')
+  const [updateSuccess, setUpdateSuccess] = useState('')
+  const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
     if (!id) {
@@ -52,6 +56,51 @@ function EmployeeDetails() {
     setLoading(true)
     setError('')
     setIncludeHistory(true)
+  }
+
+  async function submitSalaryUpdate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!id || !employee) {
+      return
+    }
+
+    const formData = new FormData(event.currentTarget)
+    const amountMajor = Number(formData.get('amount'))
+    const currencyCode = String(formData.get('currencyCode') || '')
+    const effectiveFrom = String(formData.get('effectiveFrom') || '')
+    const reason = String(formData.get('reason') || '').trim()
+
+    if (
+      !Number.isFinite(amountMajor) ||
+      amountMajor <= 0 ||
+      !currencyCode ||
+      !effectiveFrom
+    ) {
+      setUpdateError('Enter a positive amount, currency, and effective date.')
+      setUpdateSuccess('')
+      return
+    }
+
+    setUpdating(true)
+    setUpdateError('')
+    setUpdateSuccess('')
+
+    try {
+      await updateEmployeeSalary(id, {
+        amount: Math.round(amountMajor * 100),
+        currencyCode,
+        effectiveFrom,
+        reason: reason || undefined,
+      })
+
+      const refreshed = await getEmployeeDetails(id, includeHistory)
+      setEmployee(refreshed.employee)
+      setUpdateSuccess('Salary updated successfully.')
+    } catch {
+      setUpdateError('Could not update salary. Please try again.')
+    } finally {
+      setUpdating(false)
+    }
   }
 
   return (
@@ -151,6 +200,85 @@ function EmployeeDetails() {
                   No current salary record.
                 </p>
               )}
+
+              <form className="mt-5 grid gap-3" onSubmit={submitSalaryUpdate}>
+                <label className="text-sm font-medium text-slate-700">
+                  Amount
+                  <input
+                    aria-label="Salary amount"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
+                    defaultValue={
+                      employee.salary
+                        ? (employee.salary.amount / 100).toFixed(2)
+                        : ''
+                    }
+                    min="0.01"
+                    name="amount"
+                    step="0.01"
+                    type="number"
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Currency
+                  <select
+                    aria-label="Salary currency"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
+                    defaultValue={employee.salary?.currencyCode || ''}
+                    name="currencyCode"
+                  >
+                    <option value="">Select currency</option>
+                    {['INR', 'USD', 'GBP', 'EUR', 'CAD', 'AUD', 'SGD', 'AED'].map(
+                      (currency) => (
+                        <option key={currency} value={currency}>
+                          {currency}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Effective date
+                  <input
+                    aria-label="Salary effective date"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
+                    defaultValue={new Date().toISOString().slice(0, 10)}
+                    name="effectiveFrom"
+                    type="date"
+                  />
+                </label>
+
+                <label className="text-sm font-medium text-slate-700">
+                  Reason
+                  <input
+                    aria-label="Salary update reason"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
+                    name="reason"
+                    placeholder="Optional"
+                    type="text"
+                  />
+                </label>
+
+                {updateError && (
+                  <p className="text-sm text-red-600" role="alert">
+                    {updateError}
+                  </p>
+                )}
+                {updateSuccess && (
+                  <p className="text-sm text-green-700" role="status">
+                    {updateSuccess}
+                  </p>
+                )}
+
+                <button
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  disabled={updating}
+                  type="submit"
+                >
+                  {updating ? 'Updating...' : 'Update salary'}
+                </button>
+              </form>
             </section>
           </div>
 

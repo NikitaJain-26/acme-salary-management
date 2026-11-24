@@ -70,6 +70,18 @@ export interface EmployeeDetailsResponse {
   employee: EmployeeDetails
 }
 
+export interface SalaryUpdateParams {
+  amount: number
+  currencyCode: string
+  effectiveFrom: string
+  reason?: string
+}
+
+export interface SalaryUpdateResponse {
+  success: true
+  salary: EmployeeSalary
+}
+
 export const apiClient = axios.create({
   baseURL: '/api',
 })
@@ -80,6 +92,18 @@ export async function getEmployees(
   const response = await apiClient.get<EmployeeListResponse>('/employees', {
     params,
   })
+
+  return response.data
+}
+
+export async function updateEmployeeSalary(
+  id: string,
+  params: SalaryUpdateParams,
+): Promise<SalaryUpdateResponse> {
+  const response = await apiClient.put<SalaryUpdateResponse>(
+    `/employees/${encodeURIComponent(id)}/salary`,
+    params,
+  )
 
   return response.data
 }

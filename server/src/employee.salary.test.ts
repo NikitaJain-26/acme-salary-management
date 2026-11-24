@@ -52,6 +52,16 @@ test('salary update changes current salary and preserves history', async () => {
   const original = employee.salary
   const testAmount = original.amount + 1
 
+  const beforeDetails = await request(
+    `/api/employees/${employee.id}?includeHistory=true`,
+  )
+  const beforeHistory = beforeDetails.body.employee.salaryHistory as Array<{
+    reason: string | null
+  }>
+  const previousReasonCount = beforeHistory.filter(
+    (record) => record.reason === 'Previous salary before update',
+  ).length
+
   try {
     const update = await request(`/api/employees/${employee.id}/salary`, {
       method: 'PUT',
@@ -79,7 +89,10 @@ test('salary update changes current salary and preserves history', async () => {
     }>
 
     assert.ok(history.some((record) => record.amount === testAmount))
-    assert.ok(history.some((record) => record.amount === original.amount))
+    const previousReasonCountAfter = history.filter(
+      (record) => record.reason === 'Previous salary before update',
+    ).length
+    assert.equal(previousReasonCountAfter, previousReasonCount)
   } finally {
     await request(`/api/employees/${employee.id}/salary`, {
       method: 'PUT',

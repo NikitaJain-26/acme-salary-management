@@ -9,6 +9,7 @@ import {
   apiClient,
   getEmployeeDetails,
   getEmployees,
+  updateEmployeeSalary,
   type EmployeeDetailsResponse,
   type EmployeeListParams,
   type EmployeeListResponse,
@@ -115,5 +116,49 @@ describe('getEmployees', () => {
 
     expect(requestUrl).toBe('/employees/employee%2F1')
     expect(requestParams).toEqual({ includeHistory: true })
+  })
+
+  it('updates an employee salary with integer minor units', async () => {
+    let requestUrl: string | undefined
+    let requestBody: unknown
+    const adapter: AxiosAdapter = async (config) => {
+      requestUrl = config.url
+      requestBody = config.data
+
+      return {
+        data: {
+          success: true,
+          salary: {
+            id: 'salary-1',
+            employeeId: 'employee/1',
+            amount: 8000000,
+            currencyCode: 'INR',
+            effectiveFrom: '2026-11-23T00:00:00.000Z',
+            createdAt: '2026-11-23T00:00:00.000Z',
+            updatedAt: '2026-11-23T00:00:00.000Z',
+          },
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: new AxiosHeaders(),
+        config,
+      }
+    }
+    apiClient.defaults.adapter = adapter
+
+    await updateEmployeeSalary('employee/1', {
+      amount: 8000000,
+      currencyCode: 'INR',
+      effectiveFrom: '2026-11-23',
+      reason: 'Annual adjustment',
+    })
+
+    expect(requestUrl).toBe('/employees/employee%2F1/salary')
+    expect(JSON.parse(requestBody as string)).toEqual({
+      amount: 8000000,
+      currencyCode: 'INR',
+      effectiveFrom: '2026-11-23',
+      reason: 'Annual adjustment',
+    })
   })
 })

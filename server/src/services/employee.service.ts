@@ -103,27 +103,22 @@ export async function updateEmployeeSalary(
       where: { employeeId },
     })
 
-    if (existingSalary) {
+    const salaryChanged = !existingSalary ||
+      existingSalary.amount !== params.amount ||
+      existingSalary.currencyCode !== params.currencyCode ||
+      existingSalary.effectiveFrom.getTime() !== params.effectiveFrom.getTime()
+
+    if (salaryChanged) {
       await tx.salaryHistory.create({
         data: {
           employeeId,
-          amount: existingSalary.amount,
-          currencyCode: existingSalary.currencyCode,
-          effectiveFrom: existingSalary.effectiveFrom,
-          reason: 'Previous salary before update',
+          amount: params.amount,
+          currencyCode: params.currencyCode,
+          effectiveFrom: params.effectiveFrom,
+          reason: params.reason,
         },
       })
     }
-
-    await tx.salaryHistory.create({
-      data: {
-        employeeId,
-        amount: params.amount,
-        currencyCode: params.currencyCode,
-        effectiveFrom: params.effectiveFrom,
-        reason: params.reason,
-      },
-    })
 
     const salary = await tx.salary.upsert({
       where: { employeeId },
