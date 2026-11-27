@@ -12,6 +12,7 @@ import {
 import {
   getEmployees,
 } from '../services/employeeApi'
+import DataTable, { type DataTableColumn } from '../components/ui/DataTable'
 import type {
   Employee,
   EmployeeListParams,
@@ -103,6 +104,60 @@ function EmployeeDirectory() {
   }
 
   const totalPages = result?.totalPages ?? 0
+  const columns: DataTableColumn<Employee>[] = [
+    {
+      key: 'employee',
+      header: 'Employee',
+      cellClassName: 'px-5 py-4',
+      render: (employee) => (
+        <>
+          <Link
+            className="font-medium text-blue-700 hover:underline"
+            to={`/employees/${encodeURIComponent(employee.id)}`}
+          >
+            {employee.firstName} {employee.lastName}
+          </Link>
+          <p className="text-xs text-slate-500">
+            {employee.employeeNumber} · {employee.email}
+          </p>
+        </>
+      ),
+    },
+    { key: 'department', header: 'Department', render: (employee) => employee.department },
+    { key: 'country', header: 'Country', render: (employee) => employee.countryCode },
+    {
+      key: 'status',
+      header: 'Status',
+      cellClassName: 'px-5 py-4',
+      render: (employee) => (
+        <span
+          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+            employee.status === 'ACTIVE'
+              ? 'bg-green-50 text-green-700'
+              : 'bg-slate-100 text-slate-600'
+          }`}
+        >
+          {employee.status}
+        </span>
+      ),
+    },
+    {
+      key: 'hireDate',
+      header: 'Hire date',
+      render: (employee) => new Date(employee.hireDate).toLocaleDateString(),
+    },
+    {
+      key: 'salary',
+      header: 'Salary',
+      render: (employee) =>
+        employee.salary
+          ? new Intl.NumberFormat(undefined, {
+              style: 'currency',
+              currency: employee.salary.currencyCode,
+            }).format(employee.salary.amount / 100)
+          : '—',
+    },
+  ]
 
   return (
     <div>
@@ -241,65 +296,11 @@ function EmployeeDirectory() {
             No employees found.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                <tr>
-                  <th className="px-5 py-3">Employee</th>
-                  <th className="px-5 py-3">Department</th>
-                  <th className="px-5 py-3">Country</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3">Hire date</th>
-                  <th className="px-5 py-3">Salary</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {employees.map((employee) => (
-                  <tr key={employee.id}>
-                    <td className="px-5 py-4">
-                      <Link
-                        className="font-medium text-blue-700 hover:underline"
-                        to={`/employees/${encodeURIComponent(employee.id)}`}
-                      >
-                        {employee.firstName} {employee.lastName}
-                      </Link>
-                      <p className="text-xs text-slate-500">
-                        {employee.employeeNumber} · {employee.email}
-                      </p>
-                    </td>
-                    <td className="px-5 py-4 text-slate-600">
-                      {employee.department}
-                    </td>
-                    <td className="px-5 py-4 text-slate-600">
-                      {employee.countryCode}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                          employee.status === 'ACTIVE'
-                            ? 'bg-green-50 text-green-700'
-                            : 'bg-slate-100 text-slate-600'
-                        }`}
-                      >
-                        {employee.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-slate-600">
-                      {new Date(employee.hireDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-5 py-4 text-slate-600">
-                      {employee.salary
-                        ? new Intl.NumberFormat(undefined, {
-                            style: 'currency',
-                            currency: employee.salary.currencyCode,
-                          }).format(employee.salary.amount / 100)
-                        : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            columns={columns}
+            getRowKey={(employee) => employee.id}
+            rows={employees}
+          />
         )}
 
         <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4">

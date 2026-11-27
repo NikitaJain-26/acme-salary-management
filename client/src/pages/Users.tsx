@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiClient } from '../services/employeeApi'
 import type { UserRole } from '../auth/context'
+import DataTable, { type DataTableColumn } from '../components/ui/DataTable'
 
 interface ManagedUser {
   id: string
@@ -16,6 +17,45 @@ function Users() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const columns: DataTableColumn<ManagedUser>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      cellClassName: 'px-5 py-4 font-medium text-slate-900',
+      render: (user) => user.name,
+    },
+    { key: 'email', header: 'Email', render: (user) => user.email },
+    {
+      key: 'role',
+      header: 'Role',
+      cellClassName: 'px-5 py-4',
+      render: (user) => (
+        <select
+          aria-label={`Role for ${user.name}`}
+          className="rounded-lg border border-slate-300 px-2 py-1"
+          onChange={(event) => updateRole(user, event.target.value as UserRole)}
+          value={user.role}
+        >
+          <option value="VIEWER">Viewer</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      cellClassName: 'px-5 py-4',
+      render: (user) => (
+        <button
+          className="text-sm font-medium text-red-700 hover:underline"
+          onClick={() => deleteUser(user)}
+          type="button"
+        >
+          Delete
+        </button>
+      ),
+    },
+  ]
 
   async function loadUsers() {
     setLoading(true)
@@ -158,42 +198,11 @@ function Users() {
         ) : users.length === 0 ? (
           <p className="p-6 text-sm text-slate-500">No HR accounts found.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                <tr>
-                  <th className="px-5 py-3">Name</th>
-                  <th className="px-5 py-3">Email</th>
-                  <th className="px-5 py-3">Role</th>
-                  <th className="px-5 py-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td className="px-5 py-4 font-medium text-slate-900">{user.name}</td>
-                    <td className="px-5 py-4 text-slate-600">{user.email}</td>
-                    <td className="px-5 py-4">
-                      <select
-                        aria-label={`Role for ${user.name}`}
-                        className="rounded-lg border border-slate-300 px-2 py-1"
-                        onChange={(event) => updateRole(user, event.target.value as UserRole)}
-                        value={user.role}
-                      >
-                        <option value="VIEWER">Viewer</option>
-                        <option value="ADMIN">Admin</option>
-                      </select>
-                    </td>
-                    <td className="px-5 py-4">
-                      <button className="text-sm font-medium text-red-700 hover:underline" onClick={() => deleteUser(user)} type="button">
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            columns={columns}
+            getRowKey={(user) => user.id}
+            rows={users}
+          />
         )}
       </section>
     </div>

@@ -1,5 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { apiClient } from '../services/employeeApi'
+import { useState, type FormEvent } from 'react'
 import { useAuth } from '../auth/useAuth'
 
 function Login() {
@@ -8,13 +7,6 @@ function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [setupRequired, setSetupRequired] = useState(false)
-
-  useEffect(() => {
-    apiClient.get<{ setupRequired: boolean }>('/auth/status')
-      .then(({ data }) => setSetupRequired(data.setupRequired))
-      .catch(() => setError('Unable to check account setup. Please try again later.'))
-  }, [])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -55,14 +47,6 @@ function Login() {
           Sign in with your HR account to continue.
         </p>
 
-        {setupRequired && (
-          <p className="mt-5 rounded-lg bg-amber-50 p-3 text-sm text-amber-900" role="status">
-            The first administrator account has not been configured. Set
-            INITIAL_ADMIN_EMAIL and INITIAL_ADMIN_PASSWORD in the Railway service
-            variables, then restart the API.
-          </p>
-        )}
-
         {(error || connectionError) && (
           <p className="mt-5 text-sm text-red-600" role="alert">
             {error || connectionError}
@@ -94,7 +78,7 @@ function Login() {
           </label>
           <button
             className="mt-2 rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-            disabled={loading || setupRequired}
+            disabled={loading}
             type="submit"
           >
             {loading ? 'Signing in...' : 'Sign in'}

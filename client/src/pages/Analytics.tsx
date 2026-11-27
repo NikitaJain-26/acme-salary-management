@@ -3,6 +3,7 @@ import {
   getSalaryAnalytics,
 } from '../services/employeeApi'
 import type { SalaryAnalytics, SalaryAnalyticsGroup } from '../types/employee'
+import DataTable, { type DataTableColumn } from '../components/ui/DataTable'
 
 function formatCurrency(amount: number, currencyCode: string) {
   return new Intl.NumberFormat(undefined, {
@@ -22,6 +23,45 @@ function SalaryGroupTable({
   groups: SalaryAnalyticsGroup[]
   nameField: 'countryCode' | 'department'
 }) {
+  const columns: DataTableColumn<SalaryAnalyticsGroup>[] = [
+    {
+      key: 'name',
+      header: nameLabel,
+      render: (group) => group[nameField],
+      cellClassName: 'px-5 py-3 font-medium text-slate-900',
+    },
+    {
+      key: 'currency',
+      header: 'Currency',
+      render: (group) => group.currencyCode,
+    },
+    {
+      key: 'employees',
+      header: 'Employees',
+      render: (group) => group.employeeCount.toLocaleString(),
+    },
+    {
+      key: 'average',
+      header: 'Average salary',
+      render: (group) => formatCurrency(group.averageSalary, group.currencyCode),
+    },
+    {
+      key: 'lowest',
+      header: 'Lowest',
+      render: (group) => formatCurrency(group.lowestSalary, group.currencyCode),
+    },
+    {
+      key: 'highest',
+      header: 'Highest',
+      render: (group) => formatCurrency(group.highestSalary, group.currencyCode),
+    },
+    {
+      key: 'payroll',
+      header: 'Total payroll',
+      render: (group) => formatCurrency(group.totalPayroll, group.currencyCode),
+    },
+  ]
+
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
       <div className="border-b border-slate-200 px-5 py-4">
@@ -33,34 +73,12 @@ function SalaryGroupTable({
       {groups.length === 0 ? (
         <p className="p-5 text-sm text-slate-500">No salary records available.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-5 py-3">{nameLabel}</th>
-                <th className="px-5 py-3">Currency</th>
-                <th className="px-5 py-3">Employees</th>
-                <th className="px-5 py-3">Average salary</th>
-                <th className="px-5 py-3">Lowest</th>
-                <th className="px-5 py-3">Highest</th>
-                <th className="px-5 py-3">Total payroll</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {groups.map((group) => (
-                <tr key={`${group[nameField]}-${group.currencyCode}`}>
-                  <td className="px-5 py-3 font-medium text-slate-900">{group[nameField]}</td>
-                  <td className="px-5 py-3 text-slate-600">{group.currencyCode}</td>
-                  <td className="px-5 py-3 text-slate-600">{group.employeeCount.toLocaleString()}</td>
-                  <td className="px-5 py-3 text-slate-600">{formatCurrency(group.averageSalary, group.currencyCode)}</td>
-                  <td className="px-5 py-3 text-slate-600">{formatCurrency(group.lowestSalary, group.currencyCode)}</td>
-                  <td className="px-5 py-3 text-slate-600">{formatCurrency(group.highestSalary, group.currencyCode)}</td>
-                  <td className="px-5 py-3 text-slate-600">{formatCurrency(group.totalPayroll, group.currencyCode)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={columns}
+          getRowKey={(group) => `${group[nameField]}-${group.currencyCode}`}
+          rows={groups}
+          virtualizeAfter={20}
+        />
       )}
     </section>
   )
@@ -72,10 +90,17 @@ function Analytics() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    getSalaryAnalytics()
-      .then(setAnalytics)
-      .catch(() => setError('Could not load salary insights. Please try again.'))
-      .finally(() => setLoading(false))
+    async function loadAnalytics() {
+      try {
+        setAnalytics(await getSalaryAnalytics())
+      } catch {
+        setError('Could not load salary insights. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    void loadAnalytics()
   }, [])
 
   return (

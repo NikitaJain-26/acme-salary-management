@@ -6,6 +6,7 @@ import {
   updateEmployeeSalary,
 } from '../services/employeeApi'
 import type { EmployeeDetails as EmployeeDetailsData } from '../types/employee'
+import DataTable, { type DataTableColumn } from '../components/ui/DataTable'
 
 function formatCurrency(amount: number, currencyCode: string) {
   return new Intl.NumberFormat(undefined, {
@@ -24,6 +25,29 @@ function EmployeeDetails() {
   const [updateError, setUpdateError] = useState('')
   const [updateSuccess, setUpdateSuccess] = useState('')
   const [updating, setUpdating] = useState(false)
+  const salaryHistoryColumns: DataTableColumn<NonNullable<
+    EmployeeDetailsData['salaryHistory']
+  >[number]>[] = [
+    {
+      key: 'amount',
+      header: 'Amount',
+      cellClassName: 'px-4 py-3 font-medium text-slate-900',
+      render: (record) => formatCurrency(record.amount, record.currencyCode),
+    },
+    {
+      key: 'effectiveFrom',
+      header: 'Effective from',
+      cellClassName: 'px-4 py-3 text-slate-600',
+      render: (record) =>
+        new Date(record.effectiveFrom).toLocaleDateString(),
+    },
+    {
+      key: 'reason',
+      header: 'Reason',
+      cellClassName: 'px-4 py-3 text-slate-600',
+      render: (record) => record.reason || '—',
+    },
+  ]
 
   useEffect(() => {
     if (!id) {
@@ -308,33 +332,12 @@ function EmployeeDetails() {
 
             {includeHistory && (
               employee.salaryHistory?.length ? (
-                <div className="mt-4 overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                      <tr>
-                        <th className="px-4 py-3">Amount</th>
-                        <th className="px-4 py-3">Effective from</th>
-                        <th className="px-4 py-3">Reason</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {employee.salaryHistory.map((record) => (
-                        <tr key={record.id}>
-                          <td className="px-4 py-3 font-medium text-slate-900">
-                            {formatCurrency(record.amount, record.currencyCode)}
-                          </td>
-                          <td className="px-4 py-3 text-slate-600">
-                            {new Date(
-                              record.effectiveFrom,
-                            ).toLocaleDateString()}
-                          </td>
-                          <td className="px-4 py-3 text-slate-600">
-                            {record.reason || '—'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="mt-4">
+                  <DataTable
+                    columns={salaryHistoryColumns}
+                    getRowKey={(record) => record.id}
+                    rows={employee.salaryHistory}
+                  />
                 </div>
               ) : (
                 <p className="mt-4 text-sm text-slate-500">
