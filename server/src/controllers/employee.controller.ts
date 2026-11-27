@@ -1,108 +1,86 @@
 
 import type { Request, Response } from 'express'
+import type { ParamsDictionary } from 'express-serve-static-core'
+import {
+  EMPLOYEE_SORT_FIELDS,
+  isEmployeeStatus,
+  type EmployeeSortField,
+} from '../constants/employee.js'
 import {
   createEmployee,
-  employeeSortFields,
   getAllEmployees,
   getEmployeeById,
   updateEmployeeSalary,
 } from '../services/employee.service.js'
-import type { EmployeeSortField } from '../services/employee.service.js'
+import {
+  employeeCreateRequestSchema,
+  employeeSalaryUpdateRequestSchema,
+} from '../schemas/employee.js'
+import type { SortOrder } from '../types/employee.js'
 
-export async function postEmployee(req: Request, res: Response) {
-  const stringFields = [
-    'employeeNumber',
-    'firstName',
-    'lastName',
-    'email',
-    'countryCode',
-    'department',
-    'jobTitle',
-  ] as const
-  const getString = (field: (typeof stringFields)[number]) =>
-    typeof req.body[field] === 'string' ? req.body[field].trim() : ''
-  const values = {
-    employeeNumber: getString('employeeNumber'),
-    firstName: getString('firstName'),
-    lastName: getString('lastName'),
-    email: getString('email').toLowerCase(),
-    countryCode: getString('countryCode').toUpperCase(),
-    department: getString('department'),
-    jobTitle: getString('jobTitle'),
-  }
-  const statusInput = req.body.status || 'ACTIVE'
-  const hireDateInput = typeof req.body.hireDate === 'string'
-    ? req.body.hireDate.trim()
-    : ''
-  const hireDate = new Date(hireDateInput)
-  const salaryInput = req.body.salary
-  const salaryAmount = salaryInput?.amount
-  const currencyCode = typeof salaryInput?.currencyCode === 'string'
-    ? salaryInput.currencyCode.trim().toUpperCase()
-    : ''
-  const effectiveFromInput = typeof salaryInput?.effectiveFrom === 'string'
-    ? salaryInput.effectiveFrom.trim()
-    : ''
-  const effectiveFrom = new Date(effectiveFromInput)
-  const hasSalary = salaryAmount !== undefined && salaryAmount !== null && salaryAmount !== ''
+function isValidPagination(page: number, limit: number): boolean {
+  return (
+    Number.isInteger(page) &&
+    Number.isInteger(limit) &&
+    page >= 1 &&
+    limit >= 1 &&
+    limit <= 100
+  )
+}
 
-  if (
-    stringFields.some((field) => !values[field]) ||
-    values.employeeNumber.length > 32 ||
-    values.firstName.length > 100 ||
-    values.lastName.length > 100 ||
-    values.email.length > 254 ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email) ||
-    !/^[A-Z]{2}$/.test(values.countryCode) ||
-    values.department.length > 100 ||
-    values.jobTitle.length > 100 ||
-    !['ACTIVE', 'INACTIVE'].includes(statusInput) ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(hireDateInput) ||
-    Number.isNaN(hireDate.getTime())
-  ) {
-    res.status(400).json({
-      success: false,
-      message: 'Provide valid employee details, a two-letter country code, status, and hire date',
-    })
-    return
-  }
+function isSortOrder(value: string): value is SortOrder {
+  return value === 'asc' || value === 'desc'
+}
 
-  const status: 'ACTIVE' | 'INACTIVE' = statusInput === 'INACTIVE'
-    ? 'INACTIVE'
-    : 'ACTIVE'
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0
+}
 
-  if (
-    hasSalary &&
-    (
-      !Number.isSafeInteger(salaryAmount) ||
-      salaryAmount <= 0 ||
-      salaryAmount > 2_147_483_647 ||
-      !/^[A-Z]{3}$/.test(currencyCode) ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(effectiveFromInput) ||
-      Number.isNaN(effectiveFrom.getTime())
+function isIncludeHistoryValue(value: string): value is 'true' | 'false' {
+  return value === 'true' || value === 'false'
+}
+
+export async function postEmployee(
+  req: Request<ParamsDictionary, unknown, unknown>,
+  res: Response,
+) {
+  const parsedBody = employeeCreateRequestSchema.safeParse(req.body)
+  if (!parsedBody.success) {
+    const hasInvalidSalary = parsedBody.error.issues.some(
+      ({ path }) => path[0] === 'salary',
     )
-  ) {
     res.status(400).json({
       success: false,
-      message: 'Salary requires a positive amount in minor currency units, a three-letter currency code, and an effective date',
+      message: hasInvalidSalary
+        ? 'Salary requires a positive amount in minor currency units, a three-letter currency code, and an effective date'
+        : 'Provide valid employee details, a two-letter country code, status, and hire date',
     })
     return
   }
+
+  const body = parsedBody.data
+  const hireDate = new Date(body.hireDate)
+  const salary = body.salary?.amount !== undefined &&
+      body.salary.amount !== null
+    ? {
+        amount: body.salary.amount,
+        currencyCode: body.salary.currencyCode,
+        effectiveFrom: new Date(body.salary.effectiveFrom),
+      }
+    : undefined
 
   try {
     const employee = await createEmployee({
-      ...values,
-      status,
+      employeeNumber: body.employeeNumber,
+      firstName: body.firstName,
+      lastName: body.lastName,
+      email: body.email,
+      countryCode: body.countryCode,
+      department: body.department,
+      jobTitle: body.jobTitle,
+      status: body.status,
       hireDate,
-      ...(hasSalary
-        ? {
-            salary: {
-              amount: salaryAmount,
-              currencyCode,
-              effectiveFrom,
-            },
-          }
-        : {}),
+      ...(salary ? { salary } : {}),
     })
     res.status(201).json({ success: true, employee })
   } catch (error) {
@@ -137,13 +115,7 @@ export async function getEmployees(req: Request, res: Response) {
       .trim()
       .toLowerCase()
 
-    if (
-      !Number.isInteger(page) ||
-      !Number.isInteger(limit) ||
-      page < 1 ||
-      limit < 1 ||
-      limit > 100
-    ) {
+    if (!isValidPagination(page, limit)) {
       res.status(400).json({
         success: false,
         message: 'Invalid pagination parameters',
@@ -151,7 +123,7 @@ export async function getEmployees(req: Request, res: Response) {
       return
     }
 
-    if (status && !['ACTIVE', 'INACTIVE'].includes(status)) {
+    if (status && !isEmployeeStatus(status)) {
       res.status(400).json({
         success: false,
         message: 'Invalid status filter',
@@ -161,7 +133,7 @@ export async function getEmployees(req: Request, res: Response) {
 
     let sortBy: EmployeeSortField = 'createdAt'
     if (sortByInput) {
-      const matchedSortField = employeeSortFields.find(
+      const matchedSortField = EMPLOYEE_SORT_FIELDS.find(
         (field) => field === sortByInput,
       )
 
@@ -176,7 +148,7 @@ export async function getEmployees(req: Request, res: Response) {
       sortBy = matchedSortField
     }
 
-    if (!['asc', 'desc'].includes(sortOrderInput)) {
+    if (!isSortOrder(sortOrderInput)) {
       res.status(400).json({
         success: false,
         message: 'Invalid sort order',
@@ -211,10 +183,13 @@ export async function getEmployees(req: Request, res: Response) {
   }
 }
 
-export async function putEmployeeSalary(req: Request, res: Response) {
+export async function putEmployeeSalary(
+  req: Request<ParamsDictionary, unknown, unknown>,
+  res: Response,
+) {
   try {
     const id = req.params.id
-    if (typeof id !== 'string' || !id.trim()) {
+    if (!isNonEmptyString(id)) {
       res.status(400).json({
         success: false,
         message: 'Invalid employee ID',
@@ -222,29 +197,8 @@ export async function putEmployeeSalary(req: Request, res: Response) {
       return
     }
 
-    const amount = req.body.amount
-    const currencyCode =
-      typeof req.body.currencyCode === 'string'
-        ? req.body.currencyCode.trim().toUpperCase()
-        : ''
-    const effectiveFromInput =
-      typeof req.body.effectiveFrom === 'string'
-        ? req.body.effectiveFrom.trim()
-        : ''
-    const reason =
-      typeof req.body.reason === 'string' && req.body.reason.trim()
-        ? req.body.reason.trim()
-        : undefined
-
-    const effectiveFrom = new Date(effectiveFromInput)
-
-    if (
-      !Number.isInteger(amount) ||
-      amount <= 0 ||
-      !/^[A-Z]{3}$/.test(currencyCode) ||
-      !effectiveFromInput ||
-      Number.isNaN(effectiveFrom.getTime())
-    ) {
+    const parsedBody = employeeSalaryUpdateRequestSchema.safeParse(req.body)
+    if (!parsedBody.success) {
       res.status(400).json({
         success: false,
         message:
@@ -253,10 +207,11 @@ export async function putEmployeeSalary(req: Request, res: Response) {
       return
     }
 
+    const { amount, currencyCode, effectiveFrom, reason } = parsedBody.data
     const salary = await updateEmployeeSalary(id.trim(), {
       amount,
       currencyCode,
-      effectiveFrom,
+      effectiveFrom: new Date(effectiveFrom),
       reason,
     })
 
@@ -285,7 +240,7 @@ export async function putEmployeeSalary(req: Request, res: Response) {
 export async function getEmployeeDetails(req: Request, res: Response) {
   try {
     const id = req.params.id
-    if (typeof id !== 'string' || !id.trim()) {
+    if (!isNonEmptyString(id)) {
       res.status(400).json({
         success: false,
         message: 'Invalid employee ID',
@@ -297,10 +252,7 @@ export async function getEmployeeDetails(req: Request, res: Response) {
       .trim()
       .toLowerCase()
 
-    if (
-      includeHistoryInput &&
-      !['true', 'false'].includes(includeHistoryInput)
-    ) {
+    if (includeHistoryInput && !isIncludeHistoryValue(includeHistoryInput)) {
       res.status(400).json({
         success: false,
         message: 'Invalid includeHistory parameter',

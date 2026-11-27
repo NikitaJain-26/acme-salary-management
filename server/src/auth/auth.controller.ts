@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express'
+import type { ParamsDictionary } from 'express-serve-static-core'
 import prisma from '../config/database.js'
 import {
   clearSessionCookie,
@@ -9,6 +10,12 @@ import {
   type AuthenticatedRequest,
   type UserRole,
 } from './authentication.js'
+import {
+  changePasswordRequestSchema,
+  createUserRequestSchema,
+  loginRequestSchema,
+  updateUserRoleRequestSchema,
+} from '../schemas/auth.js'
 
 const loginAttempts = new Map<string, { count: number; resetAt: number }>()
 
@@ -17,7 +24,10 @@ export async function getAuthStatus(_req: Request, res: Response) {
   res.json({ success: true, setupRequired: userCount === 0 })
 }
 
-export async function login(req: Request, res: Response) {
+export async function login(
+  req: Request<ParamsDictionary, unknown, unknown>,
+  res: Response,
+) {
   const ip = req.ip || 'unknown'
   const now = Date.now()
   const attempt = loginAttempts.get(ip)
@@ -27,12 +37,9 @@ export async function login(req: Request, res: Response) {
     return
   }
 
-  const email = typeof req.body.email === 'string'
-    ? req.body.email.trim().toLowerCase()
-    : ''
-  const password = typeof req.body.password === 'string'
-    ? req.body.password
-    : ''
+  const parsedBody = loginRequestSchema.safeParse(req.body)
+  const email = parsedBody.success ? parsedBody.data.email ?? '' : ''
+  const password = parsedBody.success ? parsedBody.data.password ?? '' : ''
 
   const user = email
     ? await prisma.user.findUnique({ where: { email } })
@@ -94,30 +101,20 @@ export async function listUsers(_req: Request, res: Response) {
   res.json({ success: true, users })
 }
 
-export async function createUser(req: Request, res: Response) {
-  const name = typeof req.body.name === 'string' ? req.body.name.trim() : ''
-  const email = typeof req.body.email === 'string'
-    ? req.body.email.trim().toLowerCase()
-    : ''
-  const password = typeof req.body.password === 'string'
-    ? req.body.password
-    : ''
-  const role = req.body.role
-
-  if (
-    !name ||
-    name.length > 100 ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-    password.length < 12 ||
-    password.length > 128 ||
-    (role !== 'ADMIN' && role !== 'VIEWER')
-  ) {
+export async function createUser(
+  req: Request<ParamsDictionary, unknown, unknown>,
+  res: Response,
+) {
+  const parsedBody = createUserRequestSchema.safeParse(req.body)
+  if (!parsedBody.success) {
     res.status(400).json({
       success: false,
       message: 'Provide a name, valid email, password of at least 12 characters, and valid role',
     })
     return
   }
+
+  const { name, email, password, role } = parsedBody.data
 
   try {
     const user = await prisma.user.create({
@@ -150,17 +147,21 @@ export async function createUser(req: Request, res: Response) {
   }
 }
 
-export async function updateUserRole(req: Request, res: Response) {
+export async function updateUserRole(
+  req: Request<ParamsDictionary, unknown, unknown>,
+  res: Response,
+) {
   const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
   if (!id) {
     res.status(400).json({ success: false, message: 'Invalid user ID' })
     return
   }
-  const role = req.body.role
-  if (role !== 'ADMIN' && role !== 'VIEWER') {
+  const parsedBody = updateUserRoleRequestSchema.safeParse(req.body)
+  if (!parsedBody.success) {
     res.status(400).json({ success: false, message: 'Invalid role' })
     return
   }
+  const { role } = parsedBody.data
 
   const existingUser = await prisma.user.findUnique({ where: { id } })
   if (!existingUser) {
@@ -213,18 +214,28 @@ export async function deleteUser(req: AuthenticatedRequest, res: Response) {
   res.json({ success: true })
 }
 
-export async function changePassword(req: AuthenticatedRequest, res: Response) {
-  const currentPassword = typeof req.body.currentPassword === 'string'
-    ? req.body.currentPassword
-    : ''
-  const newPassword = typeof req.body.newPassword === 'string'
-    ? req.body.newPassword
-    : ''
-
-  if (newPassword.length < 12 || newPassword.length > 128) {
-    res.status(400).json({ success: false, message: 'New password must contain 12 to 128 characters' })
-    return
+export async function changePassword(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  const parsedBody = changePasswordRequestSchema.safeParse(req.body)
+  if (!parsedBody.success) {
+    const invalidNewPassword = parsedBody.error.issues.some(
+      ({ path }) => path[0] === 'newPassword',
+    )
+    if (invalidNewPassword) {
+      res.status(400).json({
+        success: false,
+        message: 'New password must contain 12 to 128 characters',
+      })
+      return
+    }
   }
+
+  const currentPassword = parsedBody.success
+    ? parsedBody.data.currentPassword ?? ''
+    : ''
+  const newPassword = parsedBody.success ? parsedBody.data.newPassword : ''
 
   const user = await prisma.user.findUnique({ where: { id: req.user!.id } })
   if (!user || !(await verifyPassword(currentPassword, user.passwordHash))) {

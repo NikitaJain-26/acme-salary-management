@@ -1,32 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import {
+  EMPLOYEE_COUNTRIES,
+  EMPLOYEE_DEPARTMENTS,
+  EMPLOYEE_STATUS_OPTIONS,
+  isEmployeeStatus,
+} from '../constants/employee'
 import { createEmployee } from '../services/employeeApi'
-
-const departments = [
-  'Engineering',
-  'Human Resources',
-  'Finance',
-  'Marketing',
-  'Sales',
-  'Operations',
-  'Customer Support',
-  'Legal',
-  'Product',
-  'Data & Analytics',
-  'IT',
-  'Administration',
-]
-
-const countries = [
-  { code: 'IN', name: 'India', currency: 'INR' },
-  { code: 'US', name: 'United States', currency: 'USD' },
-  { code: 'GB', name: 'United Kingdom', currency: 'GBP' },
-  { code: 'DE', name: 'Germany', currency: 'EUR' },
-  { code: 'CA', name: 'Canada', currency: 'CAD' },
-  { code: 'AU', name: 'Australia', currency: 'AUD' },
-  { code: 'SG', name: 'Singapore', currency: 'SGD' },
-  { code: 'AE', name: 'United Arab Emirates', currency: 'AED' },
-]
 
 function CreateEmployee() {
   const navigate = useNavigate()
@@ -37,7 +17,8 @@ function CreateEmployee() {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const salaryValue = String(formData.get('salary') || '')
-    const country = countries.find(
+    const statusValue = formData.get('status')
+    const country = EMPLOYEE_COUNTRIES.find(
       ({ code }) => code === formData.get('countryCode'),
     )
 
@@ -66,7 +47,7 @@ function CreateEmployee() {
         countryCode: country.code,
         department: String(formData.get('department') || ''),
         jobTitle: String(formData.get('jobTitle') || ''),
-        status: formData.get('status') === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+        status: isEmployeeStatus(statusValue) ? statusValue : 'ACTIVE',
         hireDate: String(formData.get('hireDate') || ''),
         ...(salaryValue
           ? {
@@ -132,14 +113,14 @@ function CreateEmployee() {
             Country
             <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" defaultValue="" name="countryCode" required>
               <option disabled value="">Select country</option>
-              {countries.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}
+              {EMPLOYEE_COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}
             </select>
           </label>
           <label className="text-sm font-medium text-slate-700">
             Department
             <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" defaultValue="" name="department" required>
               <option disabled value="">Select department</option>
-              {departments.map((department) => <option key={department}>{department}</option>)}
+              {EMPLOYEE_DEPARTMENTS.map((department) => <option key={department}>{department}</option>)}
             </select>
           </label>
           <label className="text-sm font-medium text-slate-700">
@@ -153,8 +134,11 @@ function CreateEmployee() {
           <label className="text-sm font-medium text-slate-700">
             Employment status
             <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" name="status">
-              <option value="ACTIVE">Active</option>
-              <option value="INACTIVE">Inactive</option>
+              {EMPLOYEE_STATUS_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
           </label>
         </section>

@@ -5,8 +5,8 @@ import { MemoryRouter } from 'react-router-dom'
 import EmployeeDirectory from './EmployeeDirectory'
 import {
   getEmployees,
-  type EmployeeListResponse,
 } from '../services/employeeApi'
+import type { EmployeeListResponse } from '../types/employee'
 
 jest.mock('../services/employeeApi', () => ({
   getEmployees: jest.fn(),

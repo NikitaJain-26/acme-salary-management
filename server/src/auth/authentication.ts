@@ -1,6 +1,7 @@
 import { createHash, randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
 import type { NextFunction, Request, Response } from 'express'
+import type { ParamsDictionary } from 'express-serve-static-core'
 import prisma from '../config/database.js'
 
 const scryptAsync = promisify(scrypt)
@@ -16,7 +17,8 @@ export interface AuthenticatedUser {
   role: UserRole
 }
 
-export interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest
+  extends Request<ParamsDictionary, unknown, unknown> {
   user?: AuthenticatedUser
   sessionTokenHash?: string
 }

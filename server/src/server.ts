@@ -41,13 +41,13 @@ app.use('/api/auth', authRoutes)
 app.use('/api/employees', requireAuth, employeeRoutes)
 app.use('/api/analytics', requireAuth, analyticsRoutes)
 
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req, res) => {
   res.status(200).json({
     success: true,
     message: 'ACME Salary Management API is running',
   })
 })
-app.get('/api/health/db', async (req, res) => {
+app.get('/api/health/db', async (_req, res) => {
   try {
     const employeeCount = await prisma.employee.count()
 

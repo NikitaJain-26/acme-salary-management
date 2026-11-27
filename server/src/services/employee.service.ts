@@ -1,33 +1,10 @@
 
 import prisma from '../config/database.js'
-
-export const employeeSortFields = [
-  'firstName',
-  'lastName',
-  'employeeNumber',
-  'countryCode',
-  'department',
-  'status',
-  'hireDate',
-  'salaryAmount',
-] as const
-
-export type EmployeeSortField =
-  | (typeof employeeSortFields)[number]
-  | 'createdAt'
-
-export type SortOrder = 'asc' | 'desc'
-
-interface PaginationParams {
-  page: number
-  limit: number
-  search?: string
-  country?: string
-  department?: string
-  status?: string
-  sortBy: EmployeeSortField
-  sortOrder: SortOrder
-}
+import type {
+  EmployeeCreateParams,
+  PaginationParams,
+  SalaryUpdateParams,
+} from '../types/employee.js'
 
 export async function getAllEmployees({
   page,
@@ -81,23 +58,6 @@ export async function getAllEmployees({
   }
 }
 
-export interface EmployeeCreateParams {
-  employeeNumber: string
-  firstName: string
-  lastName: string
-  email: string
-  countryCode: string
-  department: string
-  jobTitle: string
-  status: 'ACTIVE' | 'INACTIVE'
-  hireDate: Date
-  salary?: {
-    amount: number
-    currencyCode: string
-    effectiveFrom: Date
-  }
-}
-
 export async function createEmployee(params: EmployeeCreateParams) {
   const { salary, ...employee } = params
 
@@ -118,13 +78,6 @@ export async function createEmployee(params: EmployeeCreateParams) {
     },
     include: { salary: true },
   })
-}
-
-export interface SalaryUpdateParams {
-  amount: number
-  currencyCode: string
-  effectiveFrom: Date
-  reason?: string
 }
 
 export async function updateEmployeeSalary(

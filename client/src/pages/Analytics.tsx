@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import {
   getSalaryAnalytics,
-  type SalaryAnalytics,
-  type SalaryAnalyticsGroup,
 } from '../services/employeeApi'
+import type { SalaryAnalytics, SalaryAnalyticsGroup } from '../types/employee'
 
 function formatCurrency(amount: number, currencyCode: string) {
   return new Intl.NumberFormat(undefined, {

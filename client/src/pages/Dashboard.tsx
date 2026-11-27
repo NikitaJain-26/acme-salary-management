@@ -9,7 +9,8 @@ import {
 import StatCard from '../components/dashboard/StatCard'
 import DepartmentChart from '../components/dashboard/DepartmentChart'
 import CountryChart from '../components/dashboard/CountryChart'
-import { getSalaryAnalytics, type SalaryAnalytics } from '../services/employeeApi'
+import { getSalaryAnalytics } from '../services/employeeApi'
+import type { SalaryAnalytics } from '../types/employee'
 
 function Dashboard() {
   const [analytics, setAnalytics] = useState<SalaryAnalytics | null>(null)

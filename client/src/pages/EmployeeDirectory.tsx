@@ -2,54 +2,24 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import {
+  EMPLOYEE_COUNTRIES,
+  EMPLOYEE_DEPARTMENTS,
+  EMPLOYEE_DIRECTORY_SORT_OPTIONS,
+  EMPLOYEE_STATUS_OPTIONS,
+  isEmployeeStatus,
+  type EmployeeDirectorySortField,
+} from '../constants/employee'
+import {
   getEmployees,
-  type Employee,
-  type EmployeeListParams,
-  type EmployeeListResponse,
 } from '../services/employeeApi'
+import type {
+  Employee,
+  EmployeeListParams,
+  EmployeeListResponse,
+} from '../types/employee'
 
 type DirectoryStatus = NonNullable<EmployeeListParams['status']> | ''
-type DirectorySortField =
-  | NonNullable<EmployeeListParams['sortBy']>
-  | 'createdAt'
-
-const sortFields: DirectorySortField[] = [
-  'createdAt',
-  'firstName',
-  'lastName',
-  'employeeNumber',
-  'countryCode',
-  'department',
-  'status',
-  'hireDate',
-  'salaryAmount',
-]
-
-const departments = [
-  'Engineering',
-  'Human Resources',
-  'Finance',
-  'Marketing',
-  'Sales',
-  'Operations',
-  'Customer Support',
-  'Legal',
-  'Product',
-  'Data & Analytics',
-  'IT',
-  'Administration',
-]
-
-const countries = [
-  { code: 'IN', name: 'India' },
-  { code: 'US', name: 'United States' },
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'CA', name: 'Canada' },
-  { code: 'AU', name: 'Australia' },
-  { code: 'SG', name: 'Singapore' },
-  { code: 'AE', name: 'United Arab Emirates' },
-]
+type DirectorySortField = EmployeeDirectorySortField
 
 const pageSize = 10
 
@@ -120,11 +90,11 @@ function EmployeeDirectory() {
       search: searchInput.trim(),
       country: String(formData.get('country') || ''),
       department: String(formData.get('department') || ''),
-      status:
-        statusValue === 'ACTIVE' || statusValue === 'INACTIVE'
-          ? statusValue
-          : '',
-      sortBy: sortFields.find((field) => field === sortByValue) ?? 'createdAt',
+      status: isEmployeeStatus(statusValue) ? statusValue : '',
+      sortBy:
+        EMPLOYEE_DIRECTORY_SORT_OPTIONS.find(
+          ({ value }) => value === sortByValue,
+        )?.value ?? 'createdAt',
       sortOrder: sortOrderValue === 'asc' ? 'asc' : 'desc',
     })
     setLoading(true)
@@ -173,7 +143,7 @@ function EmployeeDirectory() {
             name="country"
           >
             <option value="">All countries</option>
-            {countries.map((country) => (
+            {EMPLOYEE_COUNTRIES.map((country) => (
               <option key={country.code} value={country.code}>
                 {country.name}
               </option>
@@ -189,7 +159,7 @@ function EmployeeDirectory() {
             name="department"
           >
             <option value="">All departments</option>
-            {departments.map((department) => (
+            {EMPLOYEE_DEPARTMENTS.map((department) => (
               <option key={department} value={department}>
                 {department}
               </option>
@@ -205,8 +175,11 @@ function EmployeeDirectory() {
             name="status"
           >
             <option value="">All statuses</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
+            {EMPLOYEE_STATUS_OPTIONS.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </select>
         </label>
 
@@ -217,15 +190,11 @@ function EmployeeDirectory() {
             defaultValue="createdAt"
             name="sortBy"
           >
-            <option value="createdAt">Recently added</option>
-            <option value="firstName">First name</option>
-            <option value="lastName">Last name</option>
-            <option value="employeeNumber">Employee number</option>
-            <option value="countryCode">Country</option>
-            <option value="department">Department</option>
-            <option value="status">Status</option>
-            <option value="hireDate">Hire date</option>
-            <option value="salaryAmount">Salary</option>
+            {EMPLOYEE_DIRECTORY_SORT_OPTIONS.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </select>
         </label>
 

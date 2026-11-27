@@ -10,10 +10,12 @@ import {
   getEmployeeDetails,
   getEmployees,
   updateEmployeeSalary,
-  type EmployeeDetailsResponse,
-  type EmployeeListParams,
-  type EmployeeListResponse,
 } from './employeeApi'
+import type {
+  EmployeeDetailsResponse,
+  EmployeeListParams,
+  EmployeeListResponse,
+} from '../types/employee'
 import type { InternalAxiosRequestConfig } from 'axios'
 
 const originalAdapter = apiClient.defaults.adapter

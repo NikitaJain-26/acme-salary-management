@@ -6,8 +6,8 @@ import EmployeeDetails from './EmployeeDetails'
 import {
   getEmployeeDetails,
   updateEmployeeSalary,
-  type EmployeeDetailsResponse,
 } from '../services/employeeApi'
+import type { EmployeeDetailsResponse } from '../types/employee'
 
 jest.mock('../services/employeeApi', () => ({
   getEmployeeDetails: jest.fn(),

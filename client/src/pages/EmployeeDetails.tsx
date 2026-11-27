@@ -4,8 +4,8 @@ import { useAuth } from '../auth/useAuth'
 import {
   getEmployeeDetails,
   updateEmployeeSalary,
-  type EmployeeDetails as EmployeeDetailsData,
 } from '../services/employeeApi'
+import type { EmployeeDetails as EmployeeDetailsData } from '../types/employee'
 
 function formatCurrency(amount: number, currencyCode: string) {
   return new Intl.NumberFormat(undefined, {
