@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../auth/useAuth'
 import {
   getEmployees,
   type Employee,
@@ -21,6 +22,7 @@ const sortFields: DirectorySortField[] = [
   'department',
   'status',
   'hireDate',
+  'salaryAmount',
 ]
 
 const departments = [
@@ -52,6 +54,7 @@ const countries = [
 const pageSize = 10
 
 function EmployeeDirectory() {
+  const { user } = useAuth()
   const [employees, setEmployees] = useState<Employee[]>([])
   const [result, setResult] = useState<EmployeeListResponse | null>(null)
   const [searchInput, setSearchInput] = useState('')
@@ -136,10 +139,17 @@ function EmployeeDirectory() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Employees</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Search and manage your employee directory.
+          Search and view your employee directory.
         </p>
       </div>
 
+      {user?.role === 'ADMIN' && (
+        <div className="mb-4 flex justify-end">
+          <Link className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700" to="/employees/new">
+            Add employee
+          </Link>
+        </div>
+      )}
       <form
         className="mb-6 grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-2 xl:grid-cols-4"
         onSubmit={applyFilters}
@@ -215,6 +225,7 @@ function EmployeeDirectory() {
             <option value="department">Department</option>
             <option value="status">Status</option>
             <option value="hireDate">Hire date</option>
+            <option value="salaryAmount">Salary</option>
           </select>
         </label>
 
@@ -270,6 +281,7 @@ function EmployeeDirectory() {
                   <th className="px-5 py-3">Country</th>
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3">Hire date</th>
+                  <th className="px-5 py-3">Salary</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -305,6 +317,14 @@ function EmployeeDirectory() {
                     </td>
                     <td className="px-5 py-4 text-slate-600">
                       {new Date(employee.hireDate).toLocaleDateString()}
+                    </td>
+                    <td className="px-5 py-4 text-slate-600">
+                      {employee.salary
+                        ? new Intl.NumberFormat(undefined, {
+                            style: 'currency',
+                            currency: employee.salary.currencyCode,
+                          }).format(employee.salary.amount / 100)
+                        : '—'}
                     </td>
                   </tr>
                 ))}

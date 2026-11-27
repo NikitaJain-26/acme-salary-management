@@ -1,13 +1,14 @@
 import {
   LayoutDashboard,
   Users,
-  Wallet,
   ChartColumn,
-  Settings,
+  Shield,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 
 function Sidebar() {
+  const { user } = useAuth()
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 rounded-lg px-4 py-3 ${
       isActive
@@ -39,20 +40,17 @@ function Sidebar() {
           Employees
         </NavLink>
 
-        <div className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-600">
-          <Wallet size={20} />
-          Salary Management
-        </div>
-
-        <div className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-600">
+        <NavLink className={linkClass} to="/analytics">
           <ChartColumn size={20} />
           Analytics
-        </div>
+        </NavLink>
 
-        <div className="flex items-center gap-3 rounded-lg px-4 py-3 text-slate-600">
-          <Settings size={20} />
-          Settings
-        </div>
+        {user?.role === 'ADMIN' && (
+          <NavLink className={linkClass} to="/users">
+            <Shield size={20} />
+            HR accounts
+          </NavLink>
+        )}
       </nav>
     </aside>
   )

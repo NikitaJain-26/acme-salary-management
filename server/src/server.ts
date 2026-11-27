@@ -2,8 +2,12 @@ import express from 'express'
 import prisma from './config/database.js'
 import 'dotenv/config'
 import employeeRoutes from './routes/employee.routes.js'
+import analyticsRoutes from './routes/analytics.routes.js'
+import authRoutes from './auth/auth.routes.js'
+import { requireAuth } from './auth/authentication.js'
 
 const app = express()
+app.set('trust proxy', 1)
 
 const PORT = Number(process.env.PORT ?? 5000)
 const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173')
@@ -22,7 +26,8 @@ app.use((req, res, next) => {
 
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin)
-    res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS')
+    res.setHeader('Access-Control-Allow-Credentials', 'true')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
   }
 
@@ -32,7 +37,9 @@ app.use((req, res, next) => {
 
   next()
 })
-app.use('/api/employees', employeeRoutes)
+app.use('/api/auth', authRoutes)
+app.use('/api/employees', requireAuth, employeeRoutes)
+app.use('/api/analytics', requireAuth, analyticsRoutes)
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({
@@ -55,6 +62,19 @@ app.get('/api/health/db', async (req, res) => {
       message: 'Database query failed',
     })
   }
+})
+
+app.use((error: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (res.headersSent) {
+    next(error)
+    return
+  }
+
+  console.error('Unhandled API error:', error)
+  res.status(500).json({
+    success: false,
+    message: 'An unexpected server error occurred',
+  })
 })
 
 async function startServer() {

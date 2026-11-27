@@ -1,15 +1,30 @@
 import assert from 'node:assert/strict'
-import { test } from 'node:test'
+import { before, test } from 'node:test'
 
-const baseUrl = 'http://localhost:5000'
+const baseUrl = process.env.API_BASE_URL ?? 'http://localhost:5000'
+let sessionCookie: string
+
+before(async () => {
+  const response = await fetch(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: process.env.TEST_ADMIN_EMAIL,
+      password: process.env.TEST_ADMIN_PASSWORD,
+    }),
+  })
+  assert.equal(response.status, 200, 'Test administrator must be configured')
+  sessionCookie = response.headers.get('set-cookie')?.split(';')[0] ?? ''
+  assert.ok(sessionCookie)
+})
 
 async function request(path: string, options?: RequestInit) {
+  const headers = new Headers(options?.headers)
+  headers.set('Content-Type', 'application/json')
+  headers.set('Cookie', sessionCookie)
   const response = await fetch(`${baseUrl}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers,
   })
 
   const body = await response.json()

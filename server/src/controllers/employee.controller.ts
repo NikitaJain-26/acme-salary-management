@@ -1,12 +1,128 @@
 
 import type { Request, Response } from 'express'
 import {
+  createEmployee,
   employeeSortFields,
   getAllEmployees,
   getEmployeeById,
   updateEmployeeSalary,
 } from '../services/employee.service.js'
 import type { EmployeeSortField } from '../services/employee.service.js'
+
+export async function postEmployee(req: Request, res: Response) {
+  const stringFields = [
+    'employeeNumber',
+    'firstName',
+    'lastName',
+    'email',
+    'countryCode',
+    'department',
+    'jobTitle',
+  ] as const
+  const getString = (field: (typeof stringFields)[number]) =>
+    typeof req.body[field] === 'string' ? req.body[field].trim() : ''
+  const values = {
+    employeeNumber: getString('employeeNumber'),
+    firstName: getString('firstName'),
+    lastName: getString('lastName'),
+    email: getString('email').toLowerCase(),
+    countryCode: getString('countryCode').toUpperCase(),
+    department: getString('department'),
+    jobTitle: getString('jobTitle'),
+  }
+  const statusInput = req.body.status || 'ACTIVE'
+  const hireDateInput = typeof req.body.hireDate === 'string'
+    ? req.body.hireDate.trim()
+    : ''
+  const hireDate = new Date(hireDateInput)
+  const salaryInput = req.body.salary
+  const salaryAmount = salaryInput?.amount
+  const currencyCode = typeof salaryInput?.currencyCode === 'string'
+    ? salaryInput.currencyCode.trim().toUpperCase()
+    : ''
+  const effectiveFromInput = typeof salaryInput?.effectiveFrom === 'string'
+    ? salaryInput.effectiveFrom.trim()
+    : ''
+  const effectiveFrom = new Date(effectiveFromInput)
+  const hasSalary = salaryAmount !== undefined && salaryAmount !== null && salaryAmount !== ''
+
+  if (
+    stringFields.some((field) => !values[field]) ||
+    values.employeeNumber.length > 32 ||
+    values.firstName.length > 100 ||
+    values.lastName.length > 100 ||
+    values.email.length > 254 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email) ||
+    !/^[A-Z]{2}$/.test(values.countryCode) ||
+    values.department.length > 100 ||
+    values.jobTitle.length > 100 ||
+    !['ACTIVE', 'INACTIVE'].includes(statusInput) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(hireDateInput) ||
+    Number.isNaN(hireDate.getTime())
+  ) {
+    res.status(400).json({
+      success: false,
+      message: 'Provide valid employee details, a two-letter country code, status, and hire date',
+    })
+    return
+  }
+
+  const status: 'ACTIVE' | 'INACTIVE' = statusInput === 'INACTIVE'
+    ? 'INACTIVE'
+    : 'ACTIVE'
+
+  if (
+    hasSalary &&
+    (
+      !Number.isSafeInteger(salaryAmount) ||
+      salaryAmount <= 0 ||
+      salaryAmount > 2_147_483_647 ||
+      !/^[A-Z]{3}$/.test(currencyCode) ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(effectiveFromInput) ||
+      Number.isNaN(effectiveFrom.getTime())
+    )
+  ) {
+    res.status(400).json({
+      success: false,
+      message: 'Salary requires a positive amount in minor currency units, a three-letter currency code, and an effective date',
+    })
+    return
+  }
+
+  try {
+    const employee = await createEmployee({
+      ...values,
+      status,
+      hireDate,
+      ...(hasSalary
+        ? {
+            salary: {
+              amount: salaryAmount,
+              currencyCode,
+              effectiveFrom,
+            },
+          }
+        : {}),
+    })
+    res.status(201).json({ success: true, employee })
+  } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 'P2002'
+    ) {
+      res.status(409).json({
+        success: false,
+        message: 'Employee number or email already exists',
+      })
+      return
+    }
+
+    console.error('Error creating employee:', error)
+    res.status(500).json({ success: false, message: 'Failed to create employee' })
+  }
+}
 
 export async function getEmployees(req: Request, res: Response) {
   try {

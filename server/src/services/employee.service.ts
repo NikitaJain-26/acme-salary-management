@@ -9,6 +9,7 @@ export const employeeSortFields = [
   'department',
   'status',
   'hireDate',
+  'salaryAmount',
 ] as const
 
 export type EmployeeSortField =
@@ -63,7 +64,9 @@ export async function getAllEmployees({
       include: {
         salary: true,
       },
-      orderBy: { [sortBy]: sortOrder },
+      orderBy: sortBy === 'salaryAmount'
+        ? { salary: { amount: sortOrder } }
+        : { [sortBy]: sortOrder },
     }),
 
     prisma.employee.count({where}),
@@ -76,6 +79,45 @@ export async function getAllEmployees({
     totalPages: Math.ceil(totalEmployees / limit),
     pageSize: limit,
   }
+}
+
+export interface EmployeeCreateParams {
+  employeeNumber: string
+  firstName: string
+  lastName: string
+  email: string
+  countryCode: string
+  department: string
+  jobTitle: string
+  status: 'ACTIVE' | 'INACTIVE'
+  hireDate: Date
+  salary?: {
+    amount: number
+    currencyCode: string
+    effectiveFrom: Date
+  }
+}
+
+export async function createEmployee(params: EmployeeCreateParams) {
+  const { salary, ...employee } = params
+
+  return prisma.employee.create({
+    data: {
+      ...employee,
+      ...(salary
+        ? {
+            salary: { create: salary },
+            salaryHistory: {
+              create: {
+                ...salary,
+                reason: 'Initial salary record',
+              },
+            },
+          }
+        : {}),
+    },
+    include: { salary: true },
+  })
 }
 
 export interface SalaryUpdateParams {

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useAuth } from '../auth/useAuth'
 import {
   getEmployeeDetails,
   updateEmployeeSalary,
@@ -14,6 +15,7 @@ function formatCurrency(amount: number, currencyCode: string) {
 }
 
 function EmployeeDetails() {
+  const { user } = useAuth()
   const { id } = useParams()
   const [employee, setEmployee] = useState<EmployeeDetailsData | null>(null)
   const [includeHistory, setIncludeHistory] = useState(false)
@@ -201,6 +203,7 @@ function EmployeeDetails() {
                 </p>
               )}
 
+              {user?.role === 'ADMIN' && (
               <form className="mt-5 grid gap-3" onSubmit={submitSalaryUpdate}>
                 <label className="text-sm font-medium text-slate-700">
                   Amount
@@ -279,6 +282,7 @@ function EmployeeDetails() {
                   {updating ? 'Updating...' : 'Update salary'}
                 </button>
               </form>
+              )}
             </section>
           </div>
 

@@ -10,6 +10,6 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["src","prisma/seed.ts"],
+  "include": ["src", "prisma/seed.ts", "prisma/bootstrap-admin.ts"],
   "exclude": ["node_modules", "dist"]
 }

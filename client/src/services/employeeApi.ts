@@ -10,6 +10,7 @@ export type EmployeeSortField =
   | 'department'
   | 'status'
   | 'hireDate'
+  | 'salaryAmount'
 
 export interface EmployeeListParams {
   page?: number
@@ -82,9 +83,66 @@ export interface SalaryUpdateResponse {
   salary: EmployeeSalary
 }
 
+export interface EmployeeCreateParams {
+  employeeNumber: string
+  firstName: string
+  lastName: string
+  email: string
+  countryCode: string
+  department: string
+  jobTitle: string
+  status: EmployeeStatus
+  hireDate: string
+  salary?: {
+    amount: number
+    currencyCode: string
+    effectiveFrom: string
+  }
+}
+
+export interface SalaryAnalyticsGroup {
+  currencyCode: string
+  employeeCount: number
+  totalPayroll: number
+  averageSalary: number
+  lowestSalary: number
+  highestSalary: number
+  countryCode?: string
+  department?: string
+}
+
+export interface SalaryAnalytics {
+  summary: {
+    totalEmployees: number
+    salaryRecords: number
+    countryCount: number
+    departmentCount: number
+  }
+  employeesByCountry: Array<{ countryCode: string; count: number }>
+  employeesByDepartment: Array<{ department: string; count: number }>
+  salaryByCurrency: SalaryAnalyticsGroup[]
+  salaryByCountryCurrency: SalaryAnalyticsGroup[]
+  salaryByDepartmentCurrency: SalaryAnalyticsGroup[]
+}
+
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: '/api',
+  withCredentials: true,
 })
+
+export async function createEmployee(
+  params: EmployeeCreateParams,
+): Promise<{ success: true; employee: Employee }> {
+  const response = await apiClient.post('/employees', params)
+  return response.data
+}
+
+export async function getSalaryAnalytics(): Promise<SalaryAnalytics> {
+  const response = await apiClient.get<SalaryAnalytics & { success: true }>(
+    '/analytics',
+  )
+  return response.data
+}
 
 export async function getEmployees(
   params: EmployeeListParams = {},
