@@ -5,10 +5,33 @@ import employeeRoutes from './routes/employee.routes.js'
 
 const app = express()
 
-const PORT = 5000
+const PORT = Number(process.env.PORT ?? 5000)
+const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
 
 // Middleware to parse JSON request bodies
 app.use(express.json())
+app.use((req, res, next) => {
+  const origin = req.get('origin')
+
+  if (origin) {
+    res.setHeader('Vary', 'Origin')
+  }
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  }
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(!origin || allowedOrigins.includes(origin) ? 204 : 403)
+  }
+
+  next()
+})
 app.use('/api/employees', employeeRoutes)
 
 app.get('/api/health', (req, res) => {
@@ -41,7 +64,7 @@ async function startServer() {
     console.log('Database connected successfully')
 
     app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`)
+      console.log(`Server listening on port ${PORT}`)
     })
   } catch (error) {
     console.error('Failed to start server:', error)
