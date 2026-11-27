@@ -1,4 +1,3 @@
-import { Bell, Search } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 
@@ -24,20 +23,7 @@ function Header() {
         {title}
       </h2>
 
-      {/* Right section */}
-      <div className="flex items-center gap-6">
-        {/* Search */}
-        <button className="text-slate-500 hover:text-slate-800">
-          <Search size={20} />
-        </button>
-
-        {/* Notifications */}
-        <button className="relative text-slate-500 hover:text-slate-800">
-          <Bell size={20} />
-          <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500" />
-        </button>
-
-        {/* Profile */}
+      <div className="flex items-center">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
             {user?.name.slice(0, 2).toUpperCase()}
