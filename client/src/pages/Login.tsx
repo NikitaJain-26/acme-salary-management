@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { useAuth } from '../auth/useAuth'
+import { useTranslation } from 'react-i18next'
 
 function Login() {
   const { login, error: connectionError } = useAuth()
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -27,7 +29,7 @@ function Login() {
         typeof requestError.response.data === 'object' &&
         'message' in requestError.response.data
           ? String(requestError.response.data.message)
-          : 'Sign in failed. Please try again.'
+          : t('login.failed')
       setError(message)
     } finally {
       setLoading(false)
@@ -39,12 +41,12 @@ function Login() {
       <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-blue-600">ACME</h1>
-          <p className="mt-1 text-sm text-slate-500">Salary Management</p>
+          <p className="mt-1 text-sm text-slate-500">{t('common.salaryManagement')}</p>
         </div>
 
-        <h2 className="text-xl font-semibold text-slate-900">Sign in</h2>
+        <h2 className="text-xl font-semibold text-slate-900">{t('login.title')}</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Sign in with your HR account to continue.
+          {t('login.description')}
         </p>
 
         {(error || connectionError) && (
@@ -55,7 +57,7 @@ function Login() {
 
         <form className="mt-6 grid gap-4" onSubmit={submit}>
           <label className="text-sm font-medium text-slate-700">
-            Email
+            {t('common.email')}
             <input
               autoComplete="username"
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
@@ -66,7 +68,7 @@ function Login() {
             />
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Password
+            {t('login.password')}
             <input
               autoComplete="current-password"
               className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
@@ -81,12 +83,12 @@ function Login() {
             disabled={loading}
             type="submit"
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? t('login.submitting') : t('login.title')}
           </button>
         </form>
 
         <p className="mt-5 text-xs text-slate-500">
-          Accounts are created by an administrator. Public registration is disabled.
+          {t('login.registrationInfo')}
         </p>
       </section>
     </main>

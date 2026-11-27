@@ -7,6 +7,7 @@ import {
   EMPLOYEE_DIRECTORY_SORT_OPTIONS,
   EMPLOYEE_STATUS_OPTIONS,
   isEmployeeStatus,
+  type EmployeeStatus,
   type EmployeeDirectorySortField,
 } from '../constants/employee'
 import {
@@ -18,14 +19,23 @@ import type {
   EmployeeListParams,
   EmployeeListResponse,
 } from '../types/employee'
+import { useTranslation } from 'react-i18next'
 
 type DirectoryStatus = NonNullable<EmployeeListParams['status']> | ''
 type DirectorySortField = EmployeeDirectorySortField
+const employeeStatusTranslationKeys: Record<
+  EmployeeStatus,
+  'employees.active' | 'employees.inactive'
+> = {
+  ACTIVE: 'employees.active',
+  INACTIVE: 'employees.inactive',
+}
 
 const pageSize = 10
 
 function EmployeeDirectory() {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const [employees, setEmployees] = useState<Employee[]>([])
   const [result, setResult] = useState<EmployeeListResponse | null>(null)
   const [searchInput, setSearchInput] = useState('')
@@ -66,7 +76,7 @@ function EmployeeDirectory() {
       })
       .catch(() => {
         if (active) {
-          setError('Could not load employees. Please try again.')
+          setError(t('employees.loadError'))
         }
       })
       .finally(() => {
@@ -78,7 +88,7 @@ function EmployeeDirectory() {
     return () => {
       active = false
     }
-  }, [filters, page])
+  }, [filters, page, t])
 
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -107,7 +117,7 @@ function EmployeeDirectory() {
   const columns: DataTableColumn<Employee>[] = [
     {
       key: 'employee',
-      header: 'Employee',
+      header: t('employees.employee'),
       cellClassName: 'px-5 py-4',
       render: (employee) => (
         <>
@@ -123,11 +133,11 @@ function EmployeeDirectory() {
         </>
       ),
     },
-    { key: 'department', header: 'Department', render: (employee) => employee.department },
-    { key: 'country', header: 'Country', render: (employee) => employee.countryCode },
+    { key: 'department', header: t('common.department'), render: (employee) => employee.department },
+    { key: 'country', header: t('common.country'), render: (employee) => employee.countryCode },
     {
       key: 'status',
-      header: 'Status',
+      header: t('common.status'),
       cellClassName: 'px-5 py-4',
       render: (employee) => (
         <span
@@ -137,18 +147,18 @@ function EmployeeDirectory() {
               : 'bg-slate-100 text-slate-600'
           }`}
         >
-          {employee.status}
+          {t(employeeStatusTranslationKeys[employee.status])}
         </span>
       ),
     },
     {
       key: 'hireDate',
-      header: 'Hire date',
+      header: t('employees.hireDate'),
       render: (employee) => new Date(employee.hireDate).toLocaleDateString(),
     },
     {
       key: 'salary',
-      header: 'Salary',
+      header: t('employees.salary'),
       render: (employee) =>
         employee.salary
           ? new Intl.NumberFormat(undefined, {
@@ -162,16 +172,16 @@ function EmployeeDirectory() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Employees</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{t('employees.title')}</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Search and view your employee directory.
+          {t('employees.description')}
         </p>
       </div>
 
       {user?.role === 'ADMIN' && (
         <div className="mb-4 flex justify-end">
           <Link className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700" to="/employees/new">
-            Add employee
+            {t('employees.add')}
           </Link>
         </div>
       )}
@@ -180,24 +190,24 @@ function EmployeeDirectory() {
         onSubmit={applyFilters}
       >
         <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-          Search
+          {t('employees.search')}
           <input
-            aria-label="Search employees"
+            aria-label={t('employees.searchAria')}
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
             onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Name, employee number, or email"
+            placeholder={t('employees.searchPlaceholder')}
             value={searchInput}
           />
         </label>
 
         <label className="text-sm font-medium text-slate-700">
-          Country
+          {t('common.country')}
           <select
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
             defaultValue=""
             name="country"
           >
-            <option value="">All countries</option>
+            <option value="">{t('employees.allCountries')}</option>
             {EMPLOYEE_COUNTRIES.map((country) => (
               <option key={country.code} value={country.code}>
                 {country.name}
@@ -207,13 +217,13 @@ function EmployeeDirectory() {
         </label>
 
         <label className="text-sm font-medium text-slate-700">
-          Department
+          {t('common.department')}
           <select
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
             defaultValue=""
             name="department"
           >
-            <option value="">All departments</option>
+            <option value="">{t('employees.allDepartments')}</option>
             {EMPLOYEE_DEPARTMENTS.map((department) => (
               <option key={department} value={department}>
                 {department}
@@ -223,45 +233,45 @@ function EmployeeDirectory() {
         </label>
 
         <label className="text-sm font-medium text-slate-700">
-          Status
+          {t('common.status')}
           <select
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
             defaultValue=""
             name="status"
           >
-            <option value="">All statuses</option>
-            {EMPLOYEE_STATUS_OPTIONS.map(({ value, label }) => (
+            <option value="">{t('employees.allStatuses')}</option>
+            {EMPLOYEE_STATUS_OPTIONS.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {t(employeeStatusTranslationKeys[value])}
               </option>
             ))}
           </select>
         </label>
 
         <label className="text-sm font-medium text-slate-700">
-          Sort by
+          {t('employees.sortBy')}
           <select
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
             defaultValue="createdAt"
             name="sortBy"
           >
-            {EMPLOYEE_DIRECTORY_SORT_OPTIONS.map(({ value, label }) => (
+            {EMPLOYEE_DIRECTORY_SORT_OPTIONS.map(({ value, labelKey }) => (
               <option key={value} value={value}>
-                {label}
+                {t(labelKey)}
               </option>
             ))}
           </select>
         </label>
 
         <label className="text-sm font-medium text-slate-700">
-          Direction
+          {t('employees.direction')}
           <select
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
             defaultValue="desc"
             name="sortOrder"
           >
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
+            <option value="asc">{t('employees.ascending')}</option>
+            <option value="desc">{t('employees.descending')}</option>
           </select>
         </label>
 
@@ -270,22 +280,22 @@ function EmployeeDirectory() {
             className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
             type="submit"
           >
-            Apply filters
+            {t('employees.applyFilters')}
           </button>
         </div>
       </form>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <h2 className="font-semibold text-slate-900">Employee list</h2>
+          <h2 className="font-semibold text-slate-900">{t('employees.employeeList')}</h2>
           <p aria-live="polite" className="text-sm text-slate-500">
-            {result ? `${result.totalEmployees.toLocaleString()} employees` : ''}
+            {result ? t('employees.employeeCount', { count: result.totalEmployees }) : ''}
           </p>
         </div>
 
         {loading ? (
           <p className="p-8 text-center text-sm text-slate-500" role="status">
-            Loading employees...
+            {t('employees.loading')}
           </p>
         ) : error ? (
           <p className="p-8 text-center text-sm text-red-600" role="alert">
@@ -293,7 +303,7 @@ function EmployeeDirectory() {
           </p>
         ) : employees.length === 0 ? (
           <p className="p-8 text-center text-sm text-slate-500">
-            No employees found.
+            {t('employees.empty')}
           </p>
         ) : (
           <DataTable
@@ -305,7 +315,10 @@ function EmployeeDirectory() {
 
         <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4">
           <p className="text-sm text-slate-500">
-            Page {result?.currentPage ?? 1} of {Math.max(totalPages, 1)}
+            {t('employees.page', {
+              current: result?.currentPage ?? 1,
+              total: Math.max(totalPages, 1),
+            })}
           </p>
           <div className="flex gap-2">
             <button
@@ -317,7 +330,7 @@ function EmployeeDirectory() {
               }}
               type="button"
             >
-              Previous
+              {t('employees.previous')}
             </button>
             <button
               className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
@@ -328,7 +341,7 @@ function EmployeeDirectory() {
               }}
               type="button"
             >
-              Next
+              {t('employees.next')}
             </button>
           </div>
         </div>

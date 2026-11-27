@@ -6,9 +6,11 @@ import {
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
+import { useTranslation } from 'react-i18next'
 
 function Sidebar() {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 rounded-lg px-4 py-3 ${
       isActive
@@ -24,7 +26,7 @@ function Sidebar() {
           ACME
         </h1>
         <p className="text-xs text-slate-500">
-          Salary Management
+          {t('common.salaryManagement')}
         </p>
       </div>
 
@@ -32,23 +34,23 @@ function Sidebar() {
       <nav className="space-y-2">
         <NavLink className={linkClass} to="/">
           <LayoutDashboard size={20} />
-          Dashboard
+          {t('navigation.dashboard')}
         </NavLink>
 
         <NavLink className={linkClass} to="/employees">
           <Users size={20} />
-          Employees
+          {t('navigation.employees')}
         </NavLink>
 
         <NavLink className={linkClass} to="/analytics">
           <ChartColumn size={20} />
-          Analytics
+          {t('navigation.analytics')}
         </NavLink>
 
         {user?.role === 'ADMIN' && (
           <NavLink className={linkClass} to="/users">
             <Shield size={20} />
-            HR accounts
+            {t('navigation.hrAccounts')}
           </NavLink>
         )}
       </nav>

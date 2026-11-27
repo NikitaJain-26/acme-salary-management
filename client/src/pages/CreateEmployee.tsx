@@ -5,11 +5,22 @@ import {
   EMPLOYEE_DEPARTMENTS,
   EMPLOYEE_STATUS_OPTIONS,
   isEmployeeStatus,
+  type EmployeeStatus,
 } from '../constants/employee'
 import { createEmployee } from '../services/employeeApi'
+import { useTranslation } from 'react-i18next'
+
+const employeeStatusTranslationKeys: Record<
+  EmployeeStatus,
+  'employees.active' | 'employees.inactive'
+> = {
+  ACTIVE: 'employees.active',
+  INACTIVE: 'employees.inactive',
+}
 
 function CreateEmployee() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -23,7 +34,7 @@ function CreateEmployee() {
     )
 
     if (!country) {
-      setError('Select a valid country.')
+      setError(t('createEmployee.countryError'))
       return
     }
 
@@ -31,7 +42,7 @@ function CreateEmployee() {
       salaryValue &&
       (!Number.isFinite(Number(salaryValue)) || Number(salaryValue) <= 0)
     ) {
-      setError('Initial salary must be a positive amount.')
+      setError(t('createEmployee.salaryError'))
       return
     }
 
@@ -72,7 +83,7 @@ function CreateEmployee() {
         typeof requestError.response.data === 'object' &&
         'message' in requestError.response.data
           ? String(requestError.response.data.message)
-          : 'Could not create employee. Please check the details and try again.'
+          : t('createEmployee.createError')
       setError(message)
     } finally {
       setSaving(false)
@@ -82,61 +93,61 @@ function CreateEmployee() {
   return (
     <div>
       <Link className="mb-5 inline-block text-sm font-medium text-blue-700 hover:underline" to="/employees">
-        Back to employees
+        {t('common.backToEmployees')}
       </Link>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Add employee</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{t('createEmployee.title')}</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Add employee details and, optionally, their initial salary record.
+          {t('createEmployee.description')}
         </p>
       </div>
 
       <form className="grid gap-6" onSubmit={submit}>
         <section className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-2">
           <label className="text-sm font-medium text-slate-700">
-            Employee number
+            {t('createEmployee.employeeNumber')}
             <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" maxLength={32} name="employeeNumber" required />
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Email
+            {t('common.email')}
             <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" name="email" required type="email" />
           </label>
           <label className="text-sm font-medium text-slate-700">
-            First name
+            {t('createEmployee.firstName')}
             <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" maxLength={100} name="firstName" required />
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Last name
+            {t('createEmployee.lastName')}
             <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" maxLength={100} name="lastName" required />
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Country
+            {t('common.country')}
             <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" defaultValue="" name="countryCode" required>
-              <option disabled value="">Select country</option>
+              <option disabled value="">{t('createEmployee.selectCountry')}</option>
               {EMPLOYEE_COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}
             </select>
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Department
+            {t('common.department')}
             <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" defaultValue="" name="department" required>
-              <option disabled value="">Select department</option>
+              <option disabled value="">{t('createEmployee.selectDepartment')}</option>
               {EMPLOYEE_DEPARTMENTS.map((department) => <option key={department}>{department}</option>)}
             </select>
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Job title
+            {t('createEmployee.jobTitle')}
             <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" maxLength={100} name="jobTitle" required />
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Hire date
+            {t('createEmployee.hireDate')}
             <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" name="hireDate" required type="date" />
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Employment status
+            {t('createEmployee.employmentStatus')}
             <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" name="status">
-              {EMPLOYEE_STATUS_OPTIONS.map(({ value, label }) => (
+              {EMPLOYEE_STATUS_OPTIONS.map((value) => (
                 <option key={value} value={value}>
-                  {label}
+                  {t(employeeStatusTranslationKeys[value])}
                 </option>
               ))}
             </select>
@@ -145,17 +156,17 @@ function CreateEmployee() {
 
         <section className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-5 md:grid-cols-2">
           <div className="md:col-span-2">
-            <h2 className="font-semibold text-slate-900">Initial salary (optional)</h2>
+            <h2 className="font-semibold text-slate-900">{t('createEmployee.initialSalary')}</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Currency follows the selected country. Salary history is created automatically.
+              {t('createEmployee.salaryNote')}
             </p>
           </div>
           <label className="text-sm font-medium text-slate-700">
-            Annual salary
-            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" min="0.01" name="salary" placeholder="Leave blank to add later" step="0.01" type="number" />
+            {t('createEmployee.annualSalary')}
+            <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" min="0.01" name="salary" placeholder={t('createEmployee.salaryPlaceholder')} step="0.01" type="number" />
           </label>
           <label className="text-sm font-medium text-slate-700">
-            Salary effective date
+            {t('createEmployee.salaryEffectiveDate')}
             <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" defaultValue={new Date().toISOString().slice(0, 10)} name="effectiveFrom" type="date" />
           </label>
         </section>
@@ -163,10 +174,10 @@ function CreateEmployee() {
         {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
         <div className="flex gap-3">
           <button className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50" disabled={saving} type="submit">
-            {saving ? 'Saving...' : 'Create employee'}
+            {saving ? t('common.saving') : t('createEmployee.create')}
           </button>
           <Link className="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 hover:bg-slate-50" to="/employees">
-            Cancel
+            {t('common.cancel')}
           </Link>
         </div>
       </form>

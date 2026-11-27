@@ -1,20 +1,22 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
+import { useTranslation } from 'react-i18next'
 
 function Header() {
   const location = useLocation()
   const { user, logout } = useAuth()
+  const { t } = useTranslation()
   const title = location.pathname.startsWith('/employees/')
-    ? 'Employee details'
+    ? t('navigation.employeeDetails')
     : location.pathname === '/employees'
-      ? 'Employees'
+      ? t('navigation.employees')
       : location.pathname === '/analytics'
-        ? 'Analytics'
+        ? t('navigation.analytics')
         : location.pathname === '/users'
-          ? 'HR accounts'
+          ? t('navigation.hrAccounts')
       : location.pathname === '/account'
-        ? 'My account'
-      : 'Dashboard'
+        ? t('navigation.myAccount')
+      : t('navigation.dashboard')
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between">
@@ -34,17 +36,17 @@ function Header() {
               {user?.name}
             </Link>
             <p className="text-xs text-slate-500">
-              {user?.role === 'ADMIN' ? 'Administrator' : 'Read only'}
+              {user?.role === 'ADMIN' ? t('common.administrator') : t('navigation.readOnly')}
             </p>
           </div>
           <button
             className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
             onClick={() => {
-              void logout().catch(() => window.alert('Could not sign out. Please try again.'))
+              void logout().catch(() => window.alert(t('navigation.signOutError')))
             }}
             type="button"
           >
-            Sign out
+            {t('navigation.signOut')}
           </button>
         </div>
       </div>

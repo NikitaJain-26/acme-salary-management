@@ -1,11 +1,13 @@
 import Highcharts from 'highcharts'
 import { HighchartsReact } from 'highcharts-react-official'
+import { useTranslation } from 'react-i18next'
 
 interface CountryChartProps {
   data: Array<{ countryCode: string; count: number }>
 }
 
 function CountryChart({ data }: CountryChartProps) {
+  const { t } = useTranslation()
   const options: Highcharts.Options = {
     chart: { type: 'pie', height: 320 },
     title: { text: '' },
@@ -25,7 +27,7 @@ function CountryChart({ data }: CountryChartProps) {
     series: [
       {
         type: 'pie',
-        name: 'Employees',
+        name: t('charts.employees'),
         data: data.map(({ countryCode, count }) => ({
           name: countryCode,
           y: count,
@@ -37,7 +39,7 @@ function CountryChart({ data }: CountryChartProps) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
       <h3 className="mb-4 text-base font-semibold text-slate-800">
-        Employees by Country
+        {t('charts.employeesByCountry')}
       </h3>
 
       <HighchartsReact

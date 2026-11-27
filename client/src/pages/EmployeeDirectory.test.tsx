@@ -2,6 +2,8 @@ import '@testing-library/jest-dom'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, jest } from '@jest/globals'
 import { MemoryRouter } from 'react-router-dom'
+import { AuthContext, type AuthContextValue } from '../auth/context'
+import '../i18n'
 import EmployeeDirectory from './EmployeeDirectory'
 import {
   getEmployees,
@@ -13,12 +15,27 @@ jest.mock('../services/employeeApi', () => ({
 }))
 
 const mockedGetEmployees = jest.mocked(getEmployees)
+const authValue: AuthContextValue = {
+  user: {
+    id: 'admin-1',
+    email: 'admin@example.com',
+    name: 'Admin User',
+    role: 'ADMIN',
+  },
+  loading: false,
+  error: '',
+  login: async () => {},
+  logout: async () => {},
+  refreshUser: async () => {},
+}
 
 function renderEmployeeDirectory() {
   return render(
-    <MemoryRouter>
-      <EmployeeDirectory />
-    </MemoryRouter>,
+    <AuthContext.Provider value={authValue}>
+      <MemoryRouter>
+        <EmployeeDirectory />
+      </MemoryRouter>
+    </AuthContext.Provider>,
   )
 }
 

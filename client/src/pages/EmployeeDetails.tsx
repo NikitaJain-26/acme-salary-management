@@ -7,7 +7,16 @@ import {
 } from '../services/employeeApi'
 import type { EmployeeDetails as EmployeeDetailsData } from '../types/employee'
 import DataTable, { type DataTableColumn } from '../components/ui/DataTable'
+import { useTranslation } from 'react-i18next'
+import type { EmployeeStatus } from '../constants/employee'
 
+const employeeStatusTranslationKeys: Record<
+  EmployeeStatus,
+  'employees.active' | 'employees.inactive'
+> = {
+  ACTIVE: 'employees.active',
+  INACTIVE: 'employees.inactive',
+}
 function formatCurrency(amount: number, currencyCode: string) {
   return new Intl.NumberFormat(undefined, {
     style: 'currency',
@@ -17,6 +26,7 @@ function formatCurrency(amount: number, currencyCode: string) {
 
 function EmployeeDetails() {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const { id } = useParams()
   const [employee, setEmployee] = useState<EmployeeDetailsData | null>(null)
   const [includeHistory, setIncludeHistory] = useState(false)
@@ -30,20 +40,20 @@ function EmployeeDetails() {
   >[number]>[] = [
     {
       key: 'amount',
-      header: 'Amount',
+      header: t('employeeDetails.amount'),
       cellClassName: 'px-4 py-3 font-medium text-slate-900',
       render: (record) => formatCurrency(record.amount, record.currencyCode),
     },
     {
       key: 'effectiveFrom',
-      header: 'Effective from',
+      header: t('employeeDetails.effectiveDate'),
       cellClassName: 'px-4 py-3 text-slate-600',
       render: (record) =>
         new Date(record.effectiveFrom).toLocaleDateString(),
     },
     {
       key: 'reason',
-      header: 'Reason',
+      header: t('employeeDetails.historyReason'),
       cellClassName: 'px-4 py-3 text-slate-600',
       render: (record) => record.reason || '—',
     },
@@ -64,7 +74,7 @@ function EmployeeDetails() {
       })
       .catch(() => {
         if (active) {
-          setError('Could not load employee details. Please try again.')
+          setError(t('employeeDetails.loadError'))
         }
       })
       .finally(() => {
@@ -76,7 +86,7 @@ function EmployeeDetails() {
     return () => {
       active = false
     }
-  }, [id, includeHistory])
+  }, [id, includeHistory, t])
 
   function loadSalaryHistory() {
     setLoading(true)
@@ -102,7 +112,7 @@ function EmployeeDetails() {
       !currencyCode ||
       !effectiveFrom
     ) {
-      setUpdateError('Enter a positive amount, currency, and effective date.')
+      setUpdateError(t('employeeDetails.salaryValidation'))
       setUpdateSuccess('')
       return
     }
@@ -121,9 +131,9 @@ function EmployeeDetails() {
 
       const refreshed = await getEmployeeDetails(id, includeHistory)
       setEmployee(refreshed.employee)
-      setUpdateSuccess('Salary updated successfully.')
+      setUpdateSuccess(t('employeeDetails.salaryUpdateSuccess'))
     } catch {
-      setUpdateError('Could not update salary. Please try again.')
+      setUpdateError(t('employeeDetails.salaryUpdateError'))
     } finally {
       setUpdating(false)
     }
@@ -135,12 +145,12 @@ function EmployeeDetails() {
         className="mb-6 inline-block text-sm font-medium text-blue-700 hover:underline"
         to="/employees"
       >
-        Back to employees
+        {t('common.backToEmployees')}
       </Link>
 
       {loading ? (
         <p className="py-12 text-center text-sm text-slate-500" role="status">
-          Loading employee details...
+          {t('employeeDetails.loading')}
         </p>
       ) : error ? (
         <p className="py-12 text-center text-sm text-red-600" role="alert">
@@ -160,41 +170,41 @@ function EmployeeDetails() {
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <section className="rounded-xl border border-slate-200 bg-white p-6">
               <h2 className="mb-4 font-semibold text-slate-900">
-                Employee information
+                {t('employeeDetails.information')}
               </h2>
               <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <dt className="text-xs text-slate-500">Email</dt>
+                  <dt className="text-xs text-slate-500">{t('common.email')}</dt>
                   <dd className="mt-1 text-sm text-slate-900">
                     {employee.email}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Job title</dt>
+                  <dt className="text-xs text-slate-500">{t('employeeDetails.jobTitle')}</dt>
                   <dd className="mt-1 text-sm text-slate-900">
                     {employee.jobTitle}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Department</dt>
+                  <dt className="text-xs text-slate-500">{t('common.department')}</dt>
                   <dd className="mt-1 text-sm text-slate-900">
                     {employee.department}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Country</dt>
+                  <dt className="text-xs text-slate-500">{t('common.country')}</dt>
                   <dd className="mt-1 text-sm text-slate-900">
                     {employee.countryCode}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Status</dt>
+                  <dt className="text-xs text-slate-500">{t('common.status')}</dt>
                   <dd className="mt-1 text-sm text-slate-900">
-                    {employee.status}
+                    {t(employeeStatusTranslationKeys[employee.status])}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Hire date</dt>
+                  <dt className="text-xs text-slate-500">{t('employeeDetails.hireDate')}</dt>
                   <dd className="mt-1 text-sm text-slate-900">
                     {new Date(employee.hireDate).toLocaleDateString()}
                   </dd>
@@ -204,7 +214,7 @@ function EmployeeDetails() {
 
             <section className="rounded-xl border border-slate-200 bg-white p-6">
               <h2 className="mb-4 font-semibold text-slate-900">
-                Current salary
+                {t('employeeDetails.currentSalary')}
               </h2>
               {employee.salary ? (
                 <>
@@ -215,7 +225,7 @@ function EmployeeDetails() {
                     )}
                   </p>
                   <p className="mt-1 text-sm text-slate-500">
-                    Effective from{' '}
+                    {t('employeeDetails.effectiveFrom')}{' '}
                     {new Date(
                       employee.salary.effectiveFrom,
                     ).toLocaleDateString()}
@@ -223,16 +233,16 @@ function EmployeeDetails() {
                 </>
               ) : (
                 <p className="text-sm text-slate-500">
-                  No current salary record.
+                  {t('employeeDetails.noCurrentSalary')}
                 </p>
               )}
 
               {user?.role === 'ADMIN' && (
               <form className="mt-5 grid gap-3" onSubmit={submitSalaryUpdate}>
                 <label className="text-sm font-medium text-slate-700">
-                  Amount
+                  {t('employeeDetails.amount')}
                   <input
-                    aria-label="Salary amount"
+                    aria-label={t('employeeDetails.salaryAmountAria')}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
                     defaultValue={
                       employee.salary
@@ -247,14 +257,14 @@ function EmployeeDetails() {
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  Currency
+                  {t('employeeDetails.currency')}
                   <select
-                    aria-label="Salary currency"
+                    aria-label={t('employeeDetails.salaryCurrencyAria')}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
                     defaultValue={employee.salary?.currencyCode || ''}
                     name="currencyCode"
                   >
-                    <option value="">Select currency</option>
+                    <option value="">{t('employeeDetails.selectCurrency')}</option>
                     {['INR', 'USD', 'GBP', 'EUR', 'CAD', 'AUD', 'SGD', 'AED'].map(
                       (currency) => (
                         <option key={currency} value={currency}>
@@ -266,9 +276,9 @@ function EmployeeDetails() {
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  Effective date
+                  {t('employeeDetails.salaryEffectiveDate')}
                   <input
-                    aria-label="Salary effective date"
+                    aria-label={t('employeeDetails.salaryDateAria')}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
                     defaultValue={new Date().toISOString().slice(0, 10)}
                     name="effectiveFrom"
@@ -277,12 +287,12 @@ function EmployeeDetails() {
                 </label>
 
                 <label className="text-sm font-medium text-slate-700">
-                  Reason
+                  {t('employeeDetails.reason')}
                   <input
-                    aria-label="Salary update reason"
+                    aria-label={t('employeeDetails.salaryReasonAria')}
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
                     name="reason"
-                    placeholder="Optional"
+                    placeholder={t('employeeDetails.optional')}
                     type="text"
                   />
                 </label>
@@ -303,7 +313,7 @@ function EmployeeDetails() {
                   disabled={updating}
                   type="submit"
                 >
-                  {updating ? 'Updating...' : 'Update salary'}
+                  {updating ? t('employeeDetails.updatingSalary') : t('employeeDetails.updateSalary')}
                 </button>
               </form>
               )}
@@ -313,9 +323,9 @@ function EmployeeDetails() {
           <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="font-semibold text-slate-900">Salary history</h2>
+                <h2 className="font-semibold text-slate-900">{t('employeeDetails.salaryHistory')}</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  History is loaded only when requested.
+                  {t('employeeDetails.historyDescription')}
                 </p>
               </div>
               {!includeHistory && (
@@ -325,7 +335,7 @@ function EmployeeDetails() {
                   onClick={loadSalaryHistory}
                   type="button"
                 >
-                  Load salary history
+                  {t('employeeDetails.loadHistory')}
                 </button>
               )}
             </div>
@@ -341,7 +351,7 @@ function EmployeeDetails() {
                 </div>
               ) : (
                 <p className="mt-4 text-sm text-slate-500">
-                  No salary history records.
+                  {t('employeeDetails.noHistory')}
                 </p>
               )
             )}
