@@ -9,6 +9,7 @@ import {
   apiClient,
   getEmployeeDetails,
   getEmployees,
+  getEmployeeOptions,
   updateEmployeeSalary,
 } from './employeeApi'
 import type {
@@ -161,6 +162,30 @@ describe('getEmployees', () => {
       currencyCode: 'INR',
       effectiveFrom: '2026-11-23',
       reason: 'Annual adjustment',
+    })
+  })
+
+  describe('getEmployeeOptions', () => {
+    it('loads supported countries and departments from the API', async () => {
+      const options = {
+        success: true as const,
+        departments: ['Engineering'],
+        countries: [{ code: 'IN', name: 'India', currency: 'INR' }],
+      }
+      const adapter: AxiosAdapter = async (config) => {
+        capturedConfig = config
+        return {
+          data: options,
+          status: 200,
+          statusText: 'OK',
+          headers: new AxiosHeaders(),
+          config,
+        }
+      }
+      apiClient.defaults.adapter = adapter
+
+      await expect(getEmployeeOptions()).resolves.toEqual(options)
+      expect(capturedConfig?.url).toBe('/employees/options')
     })
   })
 })

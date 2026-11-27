@@ -1,5 +1,9 @@
 import { z } from 'zod'
-import { EMPLOYEE_STATUSES } from '../constants/employee.js'
+import {
+  EMPLOYEE_DEPARTMENTS,
+  EMPLOYEE_STATUSES,
+  getEmployeeCountry,
+} from '../constants/employee.js'
 
 const isValidDateInput = (value: string) =>
   /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(value).getTime())
@@ -26,8 +30,17 @@ export const employeeCreateRequestSchema = z.object({
     .toLowerCase()
     .max(254)
     .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
-  countryCode: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/),
-  department: z.string().trim().min(1).max(100),
+  countryCode: z.string()
+    .trim()
+    .toUpperCase()
+    .refine((code) => getEmployeeCountry(code) !== undefined),
+  department: z.string()
+    .trim()
+    .min(1)
+    .max(100)
+    .refine((department) => EMPLOYEE_DEPARTMENTS.some(
+      (option) => option === department,
+    )),
   jobTitle: z.string().trim().min(1).max(100),
   status: z.preprocess(
     (value) => value === null ? undefined : value,
@@ -35,6 +48,19 @@ export const employeeCreateRequestSchema = z.object({
   ),
   hireDate: z.string().trim().refine(isValidDateInput),
   salary: employeeSalarySchema,
+}).superRefine((employee, context) => {
+  if (!employee.salary) {
+    return
+  }
+
+  const country = getEmployeeCountry(employee.countryCode)
+  if (country && employee.salary.currencyCode !== country.currency) {
+    context.addIssue({
+      code: 'custom',
+      path: ['salary', 'currencyCode'],
+      message: 'Salary currency must match the selected country',
+    })
+  }
 })
 
 export const employeeSalaryUpdateRequestSchema = z.object({

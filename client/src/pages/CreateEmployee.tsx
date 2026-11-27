@@ -1,14 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  EMPLOYEE_COUNTRIES,
-  EMPLOYEE_DEPARTMENTS,
   EMPLOYEE_STATUS_OPTIONS,
   isEmployeeStatus,
   type EmployeeStatus,
 } from '../constants/employee'
 import { createEmployee } from '../services/employeeApi'
 import { useTranslation } from 'react-i18next'
+import { useEmployeeOptions } from '../hooks/useEmployeeOptions'
 
 const employeeStatusTranslationKeys: Record<
   EmployeeStatus,
@@ -21,6 +20,11 @@ const employeeStatusTranslationKeys: Record<
 function CreateEmployee() {
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const {
+    options,
+    loading: optionsLoading,
+    error: optionsError,
+  } = useEmployeeOptions()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -29,12 +33,16 @@ function CreateEmployee() {
     const formData = new FormData(event.currentTarget)
     const salaryValue = String(formData.get('salary') || '')
     const statusValue = formData.get('status')
-    const country = EMPLOYEE_COUNTRIES.find(
+    const country = options?.countries.find(
       ({ code }) => code === formData.get('countryCode'),
     )
 
     if (!country) {
-      setError(t('createEmployee.countryError'))
+      setError(
+        options
+          ? t('createEmployee.countryError')
+          : t('createEmployee.optionsLoadError'),
+      )
       return
     }
 
@@ -122,16 +130,16 @@ function CreateEmployee() {
           </label>
           <label className="text-sm font-medium text-slate-700">
             {t('common.country')}
-            <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" defaultValue="" name="countryCode" required>
+            <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" defaultValue="" disabled={!options} name="countryCode" required>
               <option disabled value="">{t('createEmployee.selectCountry')}</option>
-              {EMPLOYEE_COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}
+              {options?.countries.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}
             </select>
           </label>
           <label className="text-sm font-medium text-slate-700">
             {t('common.department')}
-            <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" defaultValue="" name="department" required>
+            <select className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal" defaultValue="" disabled={!options} name="department" required>
               <option disabled value="">{t('createEmployee.selectDepartment')}</option>
-              {EMPLOYEE_DEPARTMENTS.map((department) => <option key={department}>{department}</option>)}
+              {options?.departments.map((department) => <option key={department}>{department}</option>)}
             </select>
           </label>
           <label className="text-sm font-medium text-slate-700">
@@ -171,9 +179,19 @@ function CreateEmployee() {
           </label>
         </section>
 
+        {optionsLoading && (
+          <p className="text-sm text-slate-500" role="status">
+            {t('createEmployee.optionsLoading')}
+          </p>
+        )}
+        {optionsError && (
+          <p className="text-sm text-red-600" role="alert">
+            {t('createEmployee.optionsLoadError')}
+          </p>
+        )}
         {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
         <div className="flex gap-3">
-          <button className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50" disabled={saving} type="submit">
+          <button className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50" disabled={saving || optionsLoading || !options} type="submit">
             {saving ? t('common.saving') : t('createEmployee.create')}
           </button>
           <Link className="rounded-lg border border-slate-300 px-4 py-2 font-medium text-slate-700 hover:bg-slate-50" to="/employees">

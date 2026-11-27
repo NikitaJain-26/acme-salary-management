@@ -41,6 +41,22 @@ test('requires a session to read employee data', async () => {
   assert.equal(response.status, 401)
 })
 
+test('authenticated users can load supported employee options', async () => {
+  const response = await request('/api/employees/options')
+  assert.equal(response.status, 200)
+
+  const options = await response.json() as {
+    success: boolean
+    departments: string[]
+    countries: Array<{ code: string; name: string; currency: string }>
+  }
+  assert.equal(options.success, true)
+  assert.ok(options.departments.includes('Engineering'))
+  assert.ok(options.countries.some(
+    ({ code, currency }) => code === 'IN' && currency === 'INR',
+  ))
+})
+
 test('admin can create employees and analytics reflect their salary', async () => {
   const unique = `${Date.now()}`
   const employeePayload = {

@@ -10,14 +10,16 @@ import Login from './pages/Login'
 import MainLayout from './layouts/MainLayout'
 import Users from './pages/Users'
 import Account from './pages/Account'
+import { useTranslation } from 'react-i18next'
 
 function ApplicationRoutes() {
   const { user, loading } = useAuth()
+  const { t } = useTranslation()
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-slate-500" role="status">
-        Checking sign-in...
+        {t('app.checkingSignIn')}
       </div>
     )
   }

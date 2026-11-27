@@ -2,8 +2,6 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import {
-  EMPLOYEE_COUNTRIES,
-  EMPLOYEE_DEPARTMENTS,
   EMPLOYEE_DIRECTORY_SORT_OPTIONS,
   EMPLOYEE_STATUS_OPTIONS,
   isEmployeeStatus,
@@ -20,6 +18,7 @@ import type {
   EmployeeListResponse,
 } from '../types/employee'
 import { useTranslation } from 'react-i18next'
+import { useEmployeeOptions } from '../hooks/useEmployeeOptions'
 
 type DirectoryStatus = NonNullable<EmployeeListParams['status']> | ''
 type DirectorySortField = EmployeeDirectorySortField
@@ -36,6 +35,11 @@ const pageSize = 10
 function EmployeeDirectory() {
   const { user } = useAuth()
   const { t } = useTranslation()
+  const {
+    options,
+    loading: optionsLoading,
+    error: optionsError,
+  } = useEmployeeOptions()
   const [employees, setEmployees] = useState<Employee[]>([])
   const [result, setResult] = useState<EmployeeListResponse | null>(null)
   const [searchInput, setSearchInput] = useState('')
@@ -205,10 +209,11 @@ function EmployeeDirectory() {
           <select
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
             defaultValue=""
+            disabled={!options}
             name="country"
           >
             <option value="">{t('employees.allCountries')}</option>
-            {EMPLOYEE_COUNTRIES.map((country) => (
+            {options?.countries.map((country) => (
               <option key={country.code} value={country.code}>
                 {country.name}
               </option>
@@ -221,10 +226,11 @@ function EmployeeDirectory() {
           <select
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-normal"
             defaultValue=""
+            disabled={!options}
             name="department"
           >
             <option value="">{t('employees.allDepartments')}</option>
-            {EMPLOYEE_DEPARTMENTS.map((department) => (
+            {options?.departments.map((department) => (
               <option key={department} value={department}>
                 {department}
               </option>
@@ -284,6 +290,17 @@ function EmployeeDirectory() {
           </button>
         </div>
       </form>
+
+      {optionsLoading && (
+        <p className="mb-4 text-sm text-slate-500" role="status">
+          {t('employees.optionsLoading')}
+        </p>
+      )}
+      {optionsError && (
+        <p className="mb-4 text-sm text-red-600" role="alert">
+          {t('employees.optionsLoadError')}
+        </p>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">

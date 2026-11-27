@@ -6,14 +6,17 @@ import { AuthContext, type AuthContextValue } from '../auth/context'
 import '../i18n'
 import EmployeeDirectory from './EmployeeDirectory'
 import {
+  getEmployeeOptions,
   getEmployees,
 } from '../services/employeeApi'
 import type { EmployeeListResponse } from '../types/employee'
 
 jest.mock('../services/employeeApi', () => ({
+  getEmployeeOptions: jest.fn(),
   getEmployees: jest.fn(),
 }))
 
+const mockedGetEmployeeOptions = jest.mocked(getEmployeeOptions)
 const mockedGetEmployees = jest.mocked(getEmployees)
 const authValue: AuthContextValue = {
   user: {
@@ -65,11 +68,19 @@ const employeesResponse: EmployeeListResponse = {
 }
 
 afterEach(() => {
+  mockedGetEmployeeOptions.mockReset()
   mockedGetEmployees.mockReset()
 })
 
 describe('EmployeeDirectory', () => {
+  const employeeOptions = {
+    success: true as const,
+    countries: [{ code: 'IN', name: 'India', currency: 'INR' }],
+    departments: ['Engineering'],
+  }
+
   it('loads and displays employees from the API', async () => {
+    mockedGetEmployeeOptions.mockResolvedValue(employeeOptions)
     mockedGetEmployees.mockResolvedValue(employeesResponse)
 
     renderEmployeeDirectory()
@@ -81,6 +92,7 @@ describe('EmployeeDirectory', () => {
   })
 
   it('sends search and selected filters to the API', async () => {
+    mockedGetEmployeeOptions.mockResolvedValue(employeeOptions)
     mockedGetEmployees.mockResolvedValue(employeesResponse)
 
     renderEmployeeDirectory()
@@ -124,6 +136,7 @@ describe('EmployeeDirectory', () => {
   })
 
   it('requests the next server-side page', async () => {
+    mockedGetEmployeeOptions.mockResolvedValue(employeeOptions)
     mockedGetEmployees.mockResolvedValue({
       ...employeesResponse,
       totalEmployees: 11,
@@ -142,6 +155,7 @@ describe('EmployeeDirectory', () => {
   })
 
   it('shows an error when the API request fails', async () => {
+    mockedGetEmployeeOptions.mockResolvedValue(employeeOptions)
     mockedGetEmployees.mockRejectedValue(new Error('API unavailable'))
 
     renderEmployeeDirectory()

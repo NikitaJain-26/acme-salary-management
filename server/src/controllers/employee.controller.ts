@@ -2,6 +2,8 @@
 import type { Request, Response } from 'express'
 import type { ParamsDictionary } from 'express-serve-static-core'
 import {
+  EMPLOYEE_COUNTRIES,
+  EMPLOYEE_DEPARTMENTS,
   EMPLOYEE_SORT_FIELDS,
   isEmployeeStatus,
   type EmployeeSortField,
@@ -40,6 +42,14 @@ function isIncludeHistoryValue(value: string): value is 'true' | 'false' {
   return value === 'true' || value === 'false'
 }
 
+export function getEmployeeOptions(_req: Request, res: Response) {
+  res.status(200).json({
+    success: true,
+    departments: EMPLOYEE_DEPARTMENTS,
+    countries: EMPLOYEE_COUNTRIES,
+  })
+}
+
 export async function postEmployee(
   req: Request<ParamsDictionary, unknown, unknown>,
   res: Response,
@@ -53,7 +63,7 @@ export async function postEmployee(
       success: false,
       message: hasInvalidSalary
         ? 'Salary requires a positive amount in minor currency units, a three-letter currency code, and an effective date'
-        : 'Provide valid employee details, a two-letter country code, status, and hire date',
+        : 'Provide valid employee details, a supported country and department, status, and hire date',
     })
     return
   }

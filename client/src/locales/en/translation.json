@@ -14,7 +14,10 @@
     "administrator": "Administrator",
     "viewer": "Viewer",
     "admin": "Admin",
-    "backToEmployees": "Back to employees"
+    "backToEmployees": "Back to employees",
+    "language": "Language",
+    "english": "English",
+    "spanish": "Spanish"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -34,6 +37,9 @@
     "submitting": "Signing in...",
     "failed": "Sign in failed. Please try again.",
     "registrationInfo": "Accounts are created by an administrator. Public registration is disabled."
+  },
+  "app": {
+    "checkingSignIn": "Checking sign-in..."
   },
   "dashboard": {
     "title": "Dashboard Overview",
@@ -96,7 +102,9 @@
     "sortDepartment": "Department",
     "sortStatus": "Status",
     "sortHireDate": "Hire date",
-    "sortSalary": "Salary"
+    "sortSalary": "Salary",
+    "optionsLoading": "Loading country and department options...",
+    "optionsLoadError": "Could not load country and department options. Please try again."
   },
   "createEmployee": {
     "title": "Add employee",
@@ -118,7 +126,9 @@
     "creating": "Creating...",
     "countryError": "Select a valid country.",
     "salaryError": "Initial salary must be a positive amount.",
-    "createError": "Could not create employee. Please check the details and try again."
+    "createError": "Could not create employee. Please check the details and try again.",
+    "optionsLoading": "Loading country and department options...",
+    "optionsLoadError": "Could not load country and department options. Please try again."
   },
   "employeeDetails": {
     "loading": "Loading employee details...",

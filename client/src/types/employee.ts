@@ -56,6 +56,16 @@ export interface EmployeeListResponse {
   pageSize: number
 }
 
+export interface EmployeeOptionsResponse {
+  success: true
+  departments: string[]
+  countries: Array<{
+    code: string
+    name: string
+    currency: string
+  }>
+}
+
 export interface EmployeeDetailsResponse {
   success: true
   employee: EmployeeDetails

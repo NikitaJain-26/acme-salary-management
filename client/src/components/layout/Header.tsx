@@ -1,22 +1,24 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import { useTranslation } from 'react-i18next'
+import LanguageSelector from './LanguageSelector'
 
 function Header() {
   const location = useLocation()
   const { user, logout } = useAuth()
   const { t } = useTranslation()
-  const title = location.pathname.startsWith('/employees/')
-    ? t('navigation.employeeDetails')
-    : location.pathname === '/employees'
-      ? t('navigation.employees')
-      : location.pathname === '/analytics'
-        ? t('navigation.analytics')
-        : location.pathname === '/users'
-          ? t('navigation.hrAccounts')
-      : location.pathname === '/account'
-        ? t('navigation.myAccount')
-      : t('navigation.dashboard')
+  let title = t('navigation.dashboard')
+  if (location.pathname.startsWith('/employees/')) {
+    title = t('navigation.employeeDetails')
+  } else if (location.pathname === '/employees') {
+    title = t('navigation.employees')
+  } else if (location.pathname === '/analytics') {
+    title = t('navigation.analytics')
+  } else if (location.pathname === '/users') {
+    title = t('navigation.hrAccounts')
+  } else if (location.pathname === '/account') {
+    title = t('navigation.myAccount')
+  }
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between">
@@ -25,7 +27,9 @@ function Header() {
         {title}
       </h2>
 
-      <div className="flex items-center">
+      <div className="flex items-center gap-5">
+        <LanguageSelector />
+
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-700">
             {user?.name.slice(0, 2).toUpperCase()}

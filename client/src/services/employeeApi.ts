@@ -5,6 +5,7 @@ import type {
   EmployeeDetailsResponse,
   EmployeeListParams,
   EmployeeListResponse,
+  EmployeeOptionsResponse,
   SalaryAnalytics,
   SalaryUpdateParams,
   SalaryUpdateResponse,
@@ -36,6 +37,13 @@ export async function getEmployees(
     params,
   })
 
+  return response.data
+}
+
+export async function getEmployeeOptions(): Promise<EmployeeOptionsResponse> {
+  const response = await apiClient.get<EmployeeOptionsResponse>(
+    '/employees/options',
+  )
   return response.data
 }
 

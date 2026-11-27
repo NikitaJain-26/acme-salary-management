@@ -1,6 +1,7 @@
 
 import { Router } from 'express'
 import {
+  getEmployeeOptions,
   getEmployeeDetails,
   getEmployees,
   postEmployee,
@@ -10,6 +11,7 @@ import { requireAdmin } from '../auth/authentication.js'
 
 const router = Router()
 
+router.get('/options', getEmployeeOptions)
 router.get('/', getEmployees)
 router.post('/', requireAdmin, postEmployee)
 router.put('/:id/salary', requireAdmin, putEmployeeSalary)
