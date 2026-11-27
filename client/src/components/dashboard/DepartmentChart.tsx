@@ -1,5 +1,5 @@
 import Highcharts from 'highcharts'
-import HighchartsReact from 'highcharts-react-official'
+import { HighchartsReact } from 'highcharts-react-official'
 
 interface DepartmentChartProps {
   data: Array<{ department: string; count: number }>
